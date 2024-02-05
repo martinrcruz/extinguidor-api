@@ -54,7 +54,8 @@ userRoutes.post('/login', (req: Request, res: Response) => {
             })
             res.status(201).json({
                 ok: true,
-                tokenU: tokenUser
+                tokenU: tokenUser,
+                role: userDB.role
             });
         } else {
             res.status(500).json({
