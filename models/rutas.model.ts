@@ -12,7 +12,7 @@ const rutasSchema = new Schema({
     },
     users: [{
         type: Schema.Types.ObjectId,
-        ref: 'Users',
+        ref: 'User',
         required: [true, 'no se encontro usuario'] 
     }],
     vehicle: {

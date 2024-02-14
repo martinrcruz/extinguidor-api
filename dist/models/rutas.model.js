@@ -13,7 +13,7 @@ const rutasSchema = new mongoose_1.Schema({
     },
     users: [{
             type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'Users',
+            ref: 'User',
             required: [true, 'no se encontro usuario']
         }],
     vehicle: {
