@@ -7,12 +7,12 @@ const vehicleSchema = new Schema({
         enum:["Diesel", "Gasolina"],
        
     },
-    tipe: {
+    type: {
         type: String,
         enum:["Furgon", "Turismo"]
         
     },
-    model: {
+    modelo: {
         type: String,
         required: [true, '']
     },
@@ -42,8 +42,8 @@ vehicleSchema.pre('save', function(){
 
 export interface IVehicle extends Document {
     fuel: string;
-    tipe: string;
-    model: string;
+    type: string;
+    modelo: string;
     brand: string;
     photo: string;
     matricula: string;

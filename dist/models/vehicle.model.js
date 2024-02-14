@@ -7,11 +7,11 @@ const vehicleSchema = new mongoose_1.Schema({
         type: String,
         enum: ["Diesel", "Gasolina"],
     },
-    tipe: {
+    type: {
         type: String,
         enum: ["Furgon", "Turismo"]
     },
-    model: {
+    modelo: {
         type: String,
         required: [true, '']
     },
