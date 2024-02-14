@@ -121,6 +121,19 @@ userRoutes.get('/list', (req, res) => __awaiter(void 0, void 0, void 0, function
         res.status(500).json({ message: 'Error al obtener los users', error });
     }
 }));
+//obtener users
+userRoutes.get('/worker', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const users = yield user_model_1.User.find({ role: 'worker' });
+        res.json({
+            ok: true,
+            users: users
+        });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Error al obtener los users', error });
+    }
+}));
 // Ruta para obtener un user
 userRoutes.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;

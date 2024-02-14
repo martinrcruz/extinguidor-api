@@ -122,6 +122,18 @@ userRoutes.get('/list', async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error al obtener los users', error });
     }
 });
+//obtener users
+userRoutes.get('/worker', async (req: Request, res: Response) => {
+    try {
+        const users: IUser[] = await User.find({ role: 'worker' });
+        res.json({
+            ok: true,
+            users: users
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener los users', error });
+    }
+});
 
 // Ruta para obtener un user
 userRoutes.get('/:id', async (req: Request, res: Response) => {
