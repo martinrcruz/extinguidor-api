@@ -107,20 +107,7 @@ userRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
 });
 
 // Ruta para eliminar un user por su ID
-userRoutes.delete('/:id', async (req: Request, res: Response) => {
-    const { id } = req.params;
 
-    try {
-        const userEliminado: IUser | null = await User.findByIdAndDelete(id);
-        if (userEliminado) {
-            res.json(userEliminado);
-        } else {
-            res.status(404).json({ message: 'User no encontrado' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: 'Error al eliminar el evento', error });
-    }
-});
 
 
 //obtener users

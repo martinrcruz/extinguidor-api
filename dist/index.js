@@ -9,6 +9,7 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const cors_1 = __importDefault(require("cors"));
 const userR_1 = __importDefault(require("./routes/userR"));
 const vehicleR_1 = __importDefault(require("./routes/vehicleR"));
+const rutaR_1 = __importDefault(require("./routes/rutaR"));
 const server = new server_1.default();
 //body parser
 server.app.use(body_parser_1.default.urlencoded({ extended: true }));
@@ -31,6 +32,7 @@ else {
 //Rutas
 server.app.use('/user', userR_1.default);
 server.app.use('/vehicle', vehicleR_1.default);
+server.app.use('/rutas', rutaR_1.default);
 //levantar server
 server.start(() => {
     console.log(`Servidor corriendo en puerto ${server.port}`);

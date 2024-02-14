@@ -3,23 +3,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Vehicle = void 0;
 const mongoose_1 = require("mongoose");
 const vehicleSchema = new mongoose_1.Schema({
-    title: {
+    fuel: {
         type: String,
-        required: [true, 'title is required']
+        enum: ["Diesel", "Gasolina"],
     },
-    code: {
+    tipe: {
         type: String,
-        unique: true,
-        required: [true, '']
+        enum: ["Furgon", "Turismo"]
     },
-    description: {
-        type: String,
-    },
-    vehiclemodel: {
+    model: {
         type: String,
         required: [true, '']
     },
-    vehicleBrand: {
+    brand: {
         type: String,
         required: [true, '']
     },
@@ -28,7 +24,7 @@ const vehicleSchema = new mongoose_1.Schema({
         required: [true, ''],
         default: 'auto.jpg'
     },
-    registrationNumber: {
+    matricula: {
         type: String,
         required: [true, '']
     },

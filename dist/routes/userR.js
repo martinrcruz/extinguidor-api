@@ -60,7 +60,8 @@ userRoutes.post('/login', (req, res) => {
             });
             res.status(201).json({
                 ok: true,
-                tokenU: tokenUser
+                tokenU: tokenUser,
+                role: userDB.role
             });
         }
         else {
@@ -107,21 +108,6 @@ userRoutes.put('/update', autenticacion_1.verificarToken, (req, res) => __awaite
     }
 }));
 // Ruta para eliminar un user por su ID
-userRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.params;
-    try {
-        const userEliminado = yield user_model_1.User.findByIdAndDelete(id);
-        if (userEliminado) {
-            res.json(userEliminado);
-        }
-        else {
-            res.status(404).json({ message: 'User no encontrado' });
-        }
-    }
-    catch (error) {
-        res.status(500).json({ message: 'Error al eliminar el evento', error });
-    }
-}));
 //obtener users
 userRoutes.get('/list', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {

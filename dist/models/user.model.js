@@ -18,7 +18,8 @@ const userSchema = new mongoose_1.Schema({
     },
     photo: {
         type: String,
-        default: "perfil.jpg"
+        quired: [true, ''],
+        default: "https://ionicframework.com/docs/img/demos/avatar.svg"
     },
     role: {
         type: String,

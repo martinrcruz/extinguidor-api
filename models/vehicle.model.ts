@@ -2,24 +2,21 @@ import { Schema, model, Document } from 'mongoose';
 
 const vehicleSchema = new Schema({
 
-    title: {
+    fuel: {
         type: String,
-        required: [true, 'title is required']
+        enum:["Diesel", "Gasolina"],
+       
     },
-    code: {
+    tipe: {
         type: String,
-        unique: true,
-        required: [true, '']
-      },
-    description: {
-        type: String,
+        enum:["Furgon", "Turismo"]
         
     },
-    vehiclemodel: {
+    model: {
         type: String,
         required: [true, '']
     },
-    vehicleBrand: {
+    brand: {
         type: String,
         required: [true, '']
     },
@@ -28,7 +25,7 @@ const vehicleSchema = new Schema({
         required: [true, ''],
         default: 'auto.jpg'
     },
-    registrationNumber: {
+    matricula: {
         type: String,
         required: [true, '']
     },
@@ -44,13 +41,12 @@ vehicleSchema.pre('save', function(){
 
 
 export interface IVehicle extends Document {
-    title: string;
-    code: string;
-    description: string;
-    vehiclemodel: string;
-    vehicleBrand: string;
+    fuel: string;
+    tipe: string;
+    model: string;
+    brand: string;
     photo: string;
-    registrationNumber: string;
+    matricula: string;
     createdDate: Date;
 }
 

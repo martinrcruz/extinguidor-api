@@ -4,6 +4,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import userRoutes from "./routes/userR";
 import vehicleRoutes from "./routes/vehicleR";
+import rutaRoutes from "./routes/rutaR";
 
 
 const server = new Server();
@@ -29,6 +30,7 @@ if (process.env.CONFIG_dbNube) {
 //Rutas
  server.app.use('/user', userRoutes);
  server.app.use('/vehicle', vehicleRoutes);
+ server.app.use('/rutas', rutaRoutes);
 
 //levantar server
 server.start( () => {
