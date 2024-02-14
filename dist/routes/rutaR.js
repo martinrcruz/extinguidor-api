@@ -50,4 +50,17 @@ rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(500).json({ message: 'Error al obtener los rutas', error });
     }
 }));
+rutaRoutes.get('/fecha', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const body = req.body;
+    try {
+        const rutas = yield rutas_model_1.Ruta.find({ date: body.date }).populate('users').populate('vehicle');
+        res.json({
+            ok: true,
+            rutas: rutas
+        });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Error al obtener los rutas', error });
+    }
+}));
 exports.default = rutaRoutes;

@@ -49,5 +49,17 @@ rutaRoutes.get('/', async (req: Request, res: Response) => {
       res.status(500).json({ message: 'Error al obtener los rutas', error });
   }
 });
+rutaRoutes.get('/fecha', async (req: Request, res: Response) => {
+  const body = req.body;
+  try {
+      const rutas: IRuta[] = await Ruta.find({ date: body.date }).populate('users').populate('vehicle');
+      res.json({
+          ok: true,
+          rutas: rutas
+      });
+  } catch (error) {
+      res.status(500).json({ message: 'Error al obtener los rutas', error });
+  }
+});
 
 export default rutaRoutes;
