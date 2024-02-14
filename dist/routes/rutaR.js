@@ -40,7 +40,7 @@ rutaRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, functi
 }));
 rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const rutas = yield rutas_model_1.Ruta.find().populate('users').populate('vehicle');
+        const rutas = yield rutas_model_1.Ruta.find().populate('vehicle');
         res.json({
             ok: true,
             rutas: rutas

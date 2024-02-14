@@ -40,7 +40,7 @@ rutaRoutes.delete('/:id', async (req: Request, res: Response) => {
 
 rutaRoutes.get('/', async (req: Request, res: Response) => {
   try {
-      const rutas: IRuta[] = await Ruta.find().populate('users').populate('vehicle');
+      const rutas: IRuta[] = await Ruta.find().populate('vehicle');
       res.json({
           ok: true,
           rutas: rutas
