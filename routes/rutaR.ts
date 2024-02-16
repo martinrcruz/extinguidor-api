@@ -13,7 +13,7 @@ rutaRoutes.get('/prueba', (req: Request, res: Response) => {
     })
 });
 
-rutaRoutes.post('/create', verificarToken, async (req: Request, res: Response) => {
+rutaRoutes.post('/create', async (req: Request, res: Response) => {
         const ruta: IRuta = req.body
         try {
             const rutaDB = await Ruta.create(ruta);

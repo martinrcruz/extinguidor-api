@@ -19,7 +19,7 @@ rutaRoutes.get('/prueba', (req, res) => {
         mje: 'todo ok'
     });
 });
-rutaRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaRoutes.post('/create', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const ruta = req.body;
     try {
         const rutaDB = yield rutas_model_1.Ruta.create(ruta);
