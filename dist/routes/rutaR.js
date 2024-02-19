@@ -13,14 +13,16 @@ const express_1 = require("express");
 const rutas_model_1 = require("../models/rutas.model");
 const autenticacion_1 = require("../middlewares/autenticacion");
 const rutaRoutes = (0, express_1.Router)();
-rutaRoutes.get('/prueba', (req, res) => {
+rutaRoutes.get('/prueba', autenticacion_1.verificarToken, (req, res) => {
     res.json({
         ok: true,
         mje: 'todo ok'
     });
 });
-rutaRoutes.post('/create', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const ruta = req.body;
+    ruta.state = 'pendiente';
+    console.log(ruta);
     try {
         const rutaDB = yield rutas_model_1.Ruta.create(ruta);
         res.status(201).json({
@@ -40,7 +42,7 @@ rutaRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, functi
 }));
 rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const rutas = yield rutas_model_1.Ruta.find().populate('vehicle');
+        const rutas = yield rutas_model_1.Ruta.find().populate('vehicle').populate('users');
         res.json({
             ok: true,
             rutas: rutas
@@ -50,10 +52,10 @@ rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(500).json({ message: 'Error al obtener los rutas', error });
     }
 }));
-rutaRoutes.get('/fecha', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const body = req.body;
+rutaRoutes.get('/fecha/:date', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const date = req.params.date;
     try {
-        const rutas = yield rutas_model_1.Ruta.find({ date: body.date }).populate('users').populate('vehicle');
+        const rutas = yield rutas_model_1.Ruta.find({ date: date }).populate('users').populate('vehicle');
         res.json({
             ok: true,
             rutas: rutas
