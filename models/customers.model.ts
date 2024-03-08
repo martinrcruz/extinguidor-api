@@ -17,34 +17,25 @@ const customerSchema = new Schema({
         type: String,
         required: [true, "name is required"],
     },
-    state: {
-        type: String,
-        required: [true, "name is required"],
+    zone: {
+        type: Schema.Types.ObjectId,
+        ref: 'Zone',
     },
     phone: {
         type: String,
         required: [true, "name is required"],
     },
-    externalId: {
-        type: String,
-        required: [true, "name is required"],
-    },
+   
     contactName: {
         type: String,
         required: [true, "name is required"],
     },
-    company: {
+    code: {
         type: String,
         required: [true, "name is required"],
     },
     description: {
         type: String,
-        required: [true, "name is required"],
-    },
-    codezip: {
-        type: Schema.Types.ObjectId,
-        ref: 'Zipcode',
-        required: [true, '']    
     },
     photo: {
         type: String,
@@ -53,7 +44,7 @@ const customerSchema = new Schema({
     },
     createdAt: {
         type: Date,
-        required: [true, ""],
+        
     }
 
 });
@@ -63,19 +54,17 @@ customerSchema.pre('save', function(){
 })
 
 export interface ICustomer extends Document {
-    name: string,
-    email: string,
-    nifCif: string,
-    address: string,
-    state: string,
-    phone: string,
-    externalId: string,
-    contactName: string,
-    company: string,
-    description: string,
-    photo: string,
-    codezip: string;
-    createdAt: Date
+    code: string;
+    name: string;
+    email: string;
+    nifCif: string;
+    address: string;
+    contactName: string;
+    zone: string;
+    phone: string;
+    description: string;
+    photo: string;
+    createdAt: Date;
 
 }
 

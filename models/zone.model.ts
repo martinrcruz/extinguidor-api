@@ -7,10 +7,15 @@ const zoneSchema = new Schema({
         required: [true, 'name is required'],
         unique: true
     },
+    code: {
+        type: String,
+        required: [true, 'code is required'],
+        unique: true
+    },
     codezip: {
         type: Schema.Types.ObjectId,
         ref: 'Zipcode',
-        required: [true, '']    
+       // required: [true, '']    
     }
 
 });
@@ -18,6 +23,7 @@ const zoneSchema = new Schema({
 
 export interface IZone extends Document {
     name: string;
+    code: string;
     codezip: string;
     
 }

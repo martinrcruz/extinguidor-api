@@ -39,6 +39,22 @@ rutaRoutes.put('/update', autenticacion_1.verificarToken, (req, res) => __awaite
 }));
 // Ruta para eliminar un Ruta por su ID
 rutaRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    try {
+        const ruta = yield rutas_model_1.Ruta.findById(id);
+        if (ruta) {
+            res.json({
+                ok: true,
+                ruta: ruta
+            });
+        }
+        else {
+            res.status(404).json({ message: 'ruta no encontrada' });
+        }
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Error al obtener el evento', error });
+    }
 }));
 rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {

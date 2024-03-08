@@ -2,10 +2,10 @@ import { Router, Response, Request } from 'express';
 import { ICustomer, Customer } from '../models/customers.model';
 import { verificarToken } from '../middlewares/autenticacion';
 
-const customerRouter = Router();
+const customerRoutes = Router();
 
 
-customerRouter.get('/prueba', (req: Request, res: Response) => {
+customerRoutes.get('/prueba', (req: Request, res: Response) => {
 
     res.json({
         ok: true,
@@ -13,7 +13,7 @@ customerRouter.get('/prueba', (req: Request, res: Response) => {
     })
 });
 
-customerRouter.post('/create', verificarToken, async (req: Request, res: Response) => {
+customerRoutes.post('/create', verificarToken, async (req: Request, res: Response) => {
         const customer: ICustomer = req.body
         try {
             const customerDB = await Customer.create(customer);
@@ -30,17 +30,17 @@ customerRouter.post('/create', verificarToken, async (req: Request, res: Respons
 
 
 //actializar
-customerRouter.put('/update', verificarToken, async (req: any, res: Response) => {
+customerRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
 });
 
 // Ruta para eliminar un scustomer por su ID
-customerRouter.delete('/:id', async (req: Request, res: Response) => {
+customerRoutes.delete('/:id', async (req: Request, res: Response) => {
  
 });
 
-customerRouter.get('/', async (req: Request, res: Response) => {
+customerRoutes.get('/', async (req: Request, res: Response) => {
   try {
-      const customers: ICustomer[] = await Customer.find();
+      const customers: ICustomer[] = await Customer.find().populate('zone');
       res.json({
           ok: true,
           customers: customers
@@ -49,3 +49,5 @@ customerRouter.get('/', async (req: Request, res: Response) => {
       res.status(500).json({ message: 'Error al obtener customers', error });
   }
 });
+
+export default customerRoutes;

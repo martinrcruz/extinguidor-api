@@ -12,14 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const customers_model_1 = require("../models/customers.model");
 const autenticacion_1 = require("../middlewares/autenticacion");
-const customerRouter = (0, express_1.Router)();
-customerRouter.get('/prueba', (req, res) => {
+const customerRoutes = (0, express_1.Router)();
+customerRoutes.get('/prueba', (req, res) => {
     res.json({
         ok: true,
         mje: 'todo ok'
     });
 });
-customerRouter.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+customerRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const customer = req.body;
     try {
         const customerDB = yield customers_model_1.Customer.create(customer);
@@ -33,14 +33,14 @@ customerRouter.post('/create', autenticacion_1.verificarToken, (req, res) => __a
     }
 }));
 //actializar
-customerRouter.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+customerRoutes.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 // Ruta para eliminar un scustomer por su ID
-customerRouter.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+customerRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
-customerRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+customerRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const customers = yield customers_model_1.Customer.find();
+        const customers = yield customers_model_1.Customer.find().populate('zone');
         res.json({
             ok: true,
             customers: customers
@@ -50,3 +50,4 @@ customerRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function
         res.status(500).json({ message: 'Error al obtener customers', error });
     }
 }));
+exports.default = customerRoutes;

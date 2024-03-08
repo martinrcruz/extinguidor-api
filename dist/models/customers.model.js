@@ -19,15 +19,11 @@ const customerSchema = new mongoose_1.Schema({
         type: String,
         required: [true, "name is required"],
     },
-    state: {
-        type: String,
-        required: [true, "name is required"],
+    zone: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Zone',
     },
     phone: {
-        type: String,
-        required: [true, "name is required"],
-    },
-    externalId: {
         type: String,
         required: [true, "name is required"],
     },
@@ -35,18 +31,12 @@ const customerSchema = new mongoose_1.Schema({
         type: String,
         required: [true, "name is required"],
     },
-    company: {
+    code: {
         type: String,
         required: [true, "name is required"],
     },
     description: {
         type: String,
-        required: [true, "name is required"],
-    },
-    codezip: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Zipcode',
-        required: [true, '']
     },
     photo: {
         type: String,
@@ -55,7 +45,6 @@ const customerSchema = new mongoose_1.Schema({
     },
     createdAt: {
         type: Date,
-        required: [true, ""],
     }
 });
 customerSchema.pre('save', function () {

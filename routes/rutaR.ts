@@ -35,6 +35,21 @@ rutaRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
 
 // Ruta para eliminar un Ruta por su ID
 rutaRoutes.delete('/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+    try {
+        const ruta: IRuta | null = await Ruta.findById(id);
+        if (ruta) {
+            res.json({
+                ok: true,
+                ruta: ruta
+            });
+        } else {
+            res.status(404).json({ message: 'ruta no encontrada' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener el evento', error });
+    }
 
 });
 

@@ -5,6 +5,9 @@ import cors from "cors";
 import userRoutes from "./routes/userR";
 import vehicleRoutes from "./routes/vehicleR";
 import rutaRoutes from "./routes/rutaR";
+import customerRoutes from "./routes/customersR";
+import zoneRoutes from "./routes/zoneR";
+import parteRoutes from "./routes/parteR";
 
 
 const server = new Server();
@@ -31,6 +34,9 @@ if (process.env.CONFIG_dbNube) {
  server.app.use('/user', userRoutes);
  server.app.use('/vehicle', vehicleRoutes);
  server.app.use('/rutas', rutaRoutes);
+ server.app.use('/customers', customerRoutes);
+ server.app.use('/zone', zoneRoutes);
+ server.app.use('/partes', parteRoutes);
 
 //levantar server
 server.start( () => {

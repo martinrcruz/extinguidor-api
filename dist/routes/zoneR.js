@@ -12,14 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const zone_model_1 = require("../models/zone.model");
 const autenticacion_1 = require("../middlewares/autenticacion");
-const zoneRouter = (0, express_1.Router)();
-zoneRouter.get('/prueba', (req, res) => {
+const zoneRoutes = (0, express_1.Router)();
+zoneRoutes.get('/prueba', (req, res) => {
     res.json({
         ok: true,
         mje: 'todo ok'
     });
 });
-zoneRouter.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+zoneRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const zone = req.body;
     try {
         const zoneDB = yield zone_model_1.Zone.create(zone);
@@ -33,13 +33,13 @@ zoneRouter.post('/create', autenticacion_1.verificarToken, (req, res) => __await
     }
 }));
 //actializar
-zoneRouter.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+zoneRoutes.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 // Ruta para eliminar un Zone por su ID
-zoneRouter.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+zoneRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 //obtener Zipcodes
-zoneRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+zoneRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const zones = yield zone_model_1.Zone.find();
         res.json({
@@ -51,3 +51,4 @@ zoneRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(500).json({ message: 'Error al obtener los zonas', error });
     }
 }));
+exports.default = zoneRoutes;
