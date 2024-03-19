@@ -33,7 +33,23 @@ parteRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awai
     }
 }));
 //actializar
-parteRoutes.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+parteRoutes.post('/update', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const idparte = req.body._id;
+    const updatedParteData = req.body;
+    console.log(updatedParteData);
+    try {
+        const parteDB = yield parte_model_1.Parte.findByIdAndUpdate(idparte, updatedParteData, { new: true });
+        if (!parteDB) {
+            return res.status(404).json({ message: 'Parte no encontrada' });
+        }
+        res.status(200).json({
+            ok: true,
+            parte: parteDB
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: 'Error al actualizar la parte', err });
+    }
 }));
 parteRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
@@ -62,7 +78,7 @@ parteRoutes.get('/ruta/:ruta', (req, res) => __awaiter(void 0, void 0, void 0, f
         res.status(500).json({ message: 'Error al obtener los rutas', error });
     }
 }));
-parteRoutes.get('/noasignado/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+parteRoutes.get('/noasignados/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const fechaInicio = new Date();
     const fechaLimite = new Date();
     fechaLimite.setDate(fechaInicio.getDate() + 30);
@@ -87,12 +103,21 @@ parteRoutes.get('/noasignado/', (req, res) => __awaiter(void 0, void 0, void 0, 
     }
 }));
 parteRoutes.get('/noasignado/:fecha', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const fecha = req.params.fecha;
+    const fecha = new Date(req.params.fecha);
+    const fechaLimite = new Date();
     const noasignado = false;
+    fechaLimite.setDate(fecha.getDate() + 1);
+    const formattedStartDate = `${fecha.getFullYear()}-${(fecha.getMonth() + 1).toString().padStart(2, '0')}-${fecha.getDate().toString().padStart(2, '0')}`;
+    const formattedEndDate = `${fechaLimite.getFullYear()}-${(fechaLimite.getMonth() + 1).toString().padStart(2, '0')}-${fechaLimite.getDate().toString().padStart(2, '0')}`;
+    console.log(fecha);
+    console.log(formattedEndDate);
     try {
         const partes = yield parte_model_1.Parte.find({
             asignado: noasignado,
-            date: fecha
+            date: {
+                $gte: formattedStartDate,
+                $lte: formattedEndDate
+            }
         }).populate('customer').populate('zone');
         res.json({
             ok: true,

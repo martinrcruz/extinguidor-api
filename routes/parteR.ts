@@ -29,7 +29,22 @@ parteRoutes.post('/create', verificarToken, async (req: Request, res: Response) 
 
 
 //actializar
-parteRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
+parteRoutes.post('/update', async (req: any, res: Response) => {
+  const idparte= req.body._id
+  const updatedParteData: IParte = req.body;
+  console.log(updatedParteData);
+  try {
+    const parteDB = await Parte.findByIdAndUpdate(idparte, updatedParteData, { new: true });
+    if (!parteDB) {
+      return res.status(404).json({ message: 'Parte no encontrada' });
+    }
+    res.status(200).json({
+      ok: true,
+      parte: parteDB
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al actualizar la parte', err });
+  }
 });
 
 
@@ -64,7 +79,7 @@ parteRoutes.get('/ruta/:ruta', async (req: Request, res: Response) => {
   }
 });
 
-parteRoutes.get('/noasignado/', async (req: Request, res: Response) => {
+parteRoutes.get('/noasignados/', async (req: Request, res: Response) => {
 
   const fechaInicio = new Date();
   const fechaLimite = new Date();
@@ -92,12 +107,21 @@ parteRoutes.get('/noasignado/', async (req: Request, res: Response) => {
 });
 parteRoutes.get('/noasignado/:fecha', async (req: Request, res: Response) => {
 
-  const fecha= req.params.fecha
+  const fecha= new Date(req.params.fecha) 
+  const fechaLimite = new Date();
   const noasignado = false;
+  fechaLimite.setDate(fecha.getDate() + 1);
+  const formattedStartDate = `${fecha.getFullYear()}-${(fecha.getMonth() + 1).toString().padStart(2, '0')}-${fecha.getDate().toString().padStart(2, '0')}`;
+  const formattedEndDate = `${fechaLimite.getFullYear()}-${(fechaLimite.getMonth() + 1).toString().padStart(2, '0')}-${fechaLimite.getDate().toString().padStart(2, '0')}`;
+  console.log(fecha)
+  console.log(formattedEndDate)
   try {
     const partes: IParte[] = await Parte.find({
       asignado: noasignado,
-      date: fecha
+      date: {
+        $gte: formattedStartDate,
+        $lte: formattedEndDate
+      }
     }).populate('customer').populate('zone');
     res.json({
       ok: true,

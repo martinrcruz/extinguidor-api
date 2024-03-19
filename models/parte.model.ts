@@ -29,7 +29,7 @@ const parteSchema = new Schema({
     code: {
         type: String,
        // required: [true, 'code is required'],
-        unique: true
+       // unique: true
     },
     zone: {
         type: Schema.Types.ObjectId,

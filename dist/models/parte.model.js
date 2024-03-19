@@ -28,7 +28,7 @@ const parteSchema = new mongoose_1.Schema({
     code: {
         type: String,
         // required: [true, 'code is required'],
-        unique: true
+        // unique: true
     },
     zone: {
         type: mongoose_1.Schema.Types.ObjectId,

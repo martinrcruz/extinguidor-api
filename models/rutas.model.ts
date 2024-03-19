@@ -9,9 +9,9 @@ const rutasSchema = new Schema({
     },
     state: {
         type: String,
-        enum:["pendiente", "enProceso","finalidada"],
+        enum:["Pendiente", "EnProceso","Finalizado"],
         required:[true,''],
-        default:"pendiente"
+        default:"Pendiente"
     },
     date: {
         type: Date,

@@ -10,9 +10,9 @@ const rutasSchema = new mongoose_1.Schema({
     },
     state: {
         type: String,
-        enum: ["pendiente", "enProceso", "finalidada"],
+        enum: ["Pendiente", "EnProceso", "Finalizado"],
         required: [true, ''],
-        default: "pendiente"
+        default: "Pendiente"
     },
     date: {
         type: Date,
