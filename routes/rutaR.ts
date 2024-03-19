@@ -15,7 +15,6 @@ rutaRoutes.get('/prueba',verificarToken, (req: Request, res: Response) => {
 
 rutaRoutes.post('/create', verificarToken, async (req: Request, res: Response) => {
           const ruta: IRuta = req.body
-          ruta.state= 'pendiente'
           console.log(ruta)
           try {
               const rutaDB = await Ruta.create(ruta);
