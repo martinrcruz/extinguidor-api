@@ -2,28 +2,31 @@ import { Schema, model, Document } from 'mongoose';
 
 const commentSchema = new Schema({
 
-    comment: {
+    comentario: {
         type: String,
-        required: [true, 'name is required'],
+        required: [true, 'comentario'],
         unique: true
     },
     date:{
         type: Date,
         require: [true, '']
     },
-    report: {
+    parte: {
         type: Schema.Types.ObjectId,
-        ref: 'Report',
+        ref: 'Parte',
         required: [true, '']    
-    }
+    },
+    lat:{},
+    lgn:{},
+    fotos:[]
 
 });
 
 
 export interface IComment extends Document {
-    comment: string;
+    comentario: string;
     date: Date;
-    report: string;
+    parte: string;
     
 }
 

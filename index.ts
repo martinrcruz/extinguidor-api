@@ -2,12 +2,14 @@ import Server from "./classes/server";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import cors from "cors";
+import fileUpload from "express-fileupload";
 import userRoutes from "./routes/userR";
 import vehicleRoutes from "./routes/vehicleR";
 import rutaRoutes from "./routes/rutaR";
 import customerRoutes from "./routes/customersR";
 import zoneRoutes from "./routes/zoneR";
 import parteRoutes from "./routes/parteR";
+import rutaNRoutes from "./routes/rutaNR";
 
 
 const server = new Server();
@@ -15,6 +17,9 @@ const server = new Server();
 //body parser
 server.app.use( bodyParser.urlencoded({ extended: true}) );
 server.app.use( bodyParser.json() );
+
+//fileupload
+server.app.use(fileUpload({useTempFiles: true})); 
 //cors
 server.app.use( cors ( { origin: '*',
                            credentials: true,
@@ -34,6 +39,7 @@ if (process.env.CONFIG_dbNube) {
  server.app.use('/user', userRoutes);
  server.app.use('/vehicle', vehicleRoutes);
  server.app.use('/rutas', rutaRoutes);
+ server.app.use('/rutasn', rutaNRoutes)
  server.app.use('/customers', customerRoutes);
  server.app.use('/zone', zoneRoutes);
  server.app.use('/partes', parteRoutes);

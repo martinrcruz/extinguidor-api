@@ -5,6 +5,7 @@ const userSchema = new Schema({
   
   name: {
     type: String,
+    
     required: [true, 'nombre de usuario requerido']
   },
   code: {

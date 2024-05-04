@@ -25,5 +25,5 @@ class Token {
     }
 }
 Token.seed = process.env.CONFIG_SECRET_TOKEN || '';
-Token.caducidad = '30d';
+Token.caducidad = '5d';
 exports.default = Token;

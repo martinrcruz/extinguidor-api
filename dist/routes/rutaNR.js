@@ -10,20 +10,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const rutas_model_1 = require("../models/rutas.model");
 const autenticacion_1 = require("../middlewares/autenticacion");
-const rutaRoutes = (0, express_1.Router)();
-rutaRoutes.get('/prueba', autenticacion_1.verificarToken, (req, res) => {
+const rutaN_model_1 = require("../models/rutaN.model");
+const rutaNRoutes = (0, express_1.Router)();
+rutaNRoutes.get('/prueba', autenticacion_1.verificarToken, (req, res) => {
     res.json({
         ok: true,
         mje: 'todo ok'
     });
 });
-rutaRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaNRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const ruta = req.body;
     console.log(ruta);
     try {
-        const rutaDB = yield rutas_model_1.Ruta.create(ruta);
+        const rutaDB = yield rutaN_model_1.RutaN.create(ruta);
         res.status(201).json({
             ok: true,
             ruta: rutaDB
@@ -34,17 +34,17 @@ rutaRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __await
     }
 }));
 //actializar
-rutaRoutes.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaNRoutes.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 // Ruta para eliminar un Ruta por su ID
-rutaRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaNRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     try {
-        const ruta = yield rutas_model_1.Ruta.findById(id);
-        if (ruta) {
+        const rutaN = yield rutaN_model_1.RutaN.findById(id);
+        if (rutaN) {
             res.json({
                 ok: true,
-                ruta: ruta
+                ruta: rutaN
             });
         }
         else {
@@ -55,9 +55,9 @@ rutaRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, functi
         res.status(500).json({ message: 'Error al obtener el evento', error });
     }
 }));
-rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaNRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const rutas = yield rutas_model_1.Ruta.find().populate('vehicle').populate('users').populate('name');
+        const rutas = yield rutaN_model_1.RutaN.find();
         res.json({
             ok: true,
             rutas: rutas
@@ -67,17 +67,4 @@ rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(500).json({ message: 'Error al obtener los rutas', error });
     }
 }));
-rutaRoutes.get('/fecha/:date', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const date = req.params.date;
-    try {
-        const rutas = yield rutas_model_1.Ruta.find({ date: date }).populate('users').populate('vehicle').populate('name');
-        res.json({
-            ok: true,
-            rutas: rutas
-        });
-    }
-    catch (error) {
-        res.status(500).json({ message: 'Error al obtener los rutas', error });
-    }
-}));
-exports.default = rutaRoutes;
+exports.default = rutaNRoutes;

@@ -4,9 +4,8 @@ exports.Ruta = void 0;
 const mongoose_1 = require("mongoose");
 const rutasSchema = new mongoose_1.Schema({
     name: {
-        type: String,
-        required: [true, 'name is required'],
-        unique: true
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'RutaN',
     },
     state: {
         type: String,

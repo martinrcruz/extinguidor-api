@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 export default class Token {
    
     private static seed: string = process.env.CONFIG_SECRET_TOKEN ||'';
-    private static caducidad: string = '30d'
+    private static caducidad: string = '5d'
  
     constructor() {}
 

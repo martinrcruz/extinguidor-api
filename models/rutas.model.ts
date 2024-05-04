@@ -3,9 +3,8 @@ import { Schema, model, Document } from 'mongoose';
 const rutasSchema = new Schema({
 
     name: {
-        type: String,
-        required: [true, 'name is required'],
-        unique: true
+        type: Schema.Types.ObjectId,
+        ref: 'RutaN',
     },
     state: {
         type: String,

@@ -1,11 +1,12 @@
 import { Router, Response, Request } from 'express';
 import { IRuta, Ruta } from '../models/rutas.model';
 import { verificarToken } from '../middlewares/autenticacion';
+import { RutaN } from '../models/rutaN.model';
 
-const rutaRoutes = Router();
+const rutaNRoutes = Router();
 
 
-rutaRoutes.get('/prueba',verificarToken, (req: Request, res: Response) => {
+rutaNRoutes.get('/prueba',verificarToken, (req: Request, res: Response) => {
 
   res.json({
     ok: true,
@@ -13,11 +14,11 @@ rutaRoutes.get('/prueba',verificarToken, (req: Request, res: Response) => {
   })
 });
 
-rutaRoutes.post('/create', verificarToken, async (req: Request, res: Response) => {
+rutaNRoutes.post('/create', verificarToken, async (req: Request, res: Response) => {
           const ruta: IRuta = req.body
           console.log(ruta)
           try {
-              const rutaDB = await Ruta.create(ruta);
+              const rutaDB = await RutaN.create(ruta);
               res.status(201).json({
                 ok: true,
                 ruta: rutaDB
@@ -29,19 +30,19 @@ rutaRoutes.post('/create', verificarToken, async (req: Request, res: Response) =
 
 
 //actializar
-rutaRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
+rutaNRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
 });
 
 // Ruta para eliminar un Ruta por su ID
-rutaRoutes.delete('/:id', async (req: Request, res: Response) => {
+rutaNRoutes.delete('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
 
     try {
-        const ruta: IRuta | null = await Ruta.findById(id);
-        if (ruta) {
+        const rutaN: IRuta | null = await RutaN.findById(id);
+        if (rutaN) {
             res.json({
                 ok: true,
-                ruta: ruta
+                ruta: rutaN
             });
         } else {
             res.status(404).json({ message: 'ruta no encontrada' });
@@ -52,22 +53,9 @@ rutaRoutes.delete('/:id', async (req: Request, res: Response) => {
 
 });
 
-rutaRoutes.get('/', async (req: Request, res: Response) => {
+rutaNRoutes.get('/', async (req: Request, res: Response) => {
   try {
-    const rutas: IRuta[] = await Ruta.find().populate('vehicle').populate('users').populate('name');
-    res.json({
-      ok: true,
-      rutas: rutas
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener los rutas', error });
-  }
-});
-rutaRoutes.get('/fecha/:date', async (req: Request, res: Response) => {
-  const date =  req.params.date
-  
-  try {
-    const rutas: IRuta[] = await Ruta.find({ date: date }).populate('users').populate('vehicle').populate('name');
+    const rutas: IRuta[] = await RutaN.find();
     res.json({
       ok: true,
       rutas: rutas
@@ -79,4 +67,5 @@ rutaRoutes.get('/fecha/:date', async (req: Request, res: Response) => {
 
 
 
-export default rutaRoutes;
+
+export default rutaNRoutes;
