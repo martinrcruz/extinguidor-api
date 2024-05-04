@@ -3,19 +3,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Comment = void 0;
 const mongoose_1 = require("mongoose");
 const commentSchema = new mongoose_1.Schema({
-    comment: {
+    comentario: {
         type: String,
-        required: [true, 'name is required'],
+        required: [true, 'comentario'],
         unique: true
     },
     date: {
         type: Date,
         require: [true, '']
     },
-    report: {
+    parte: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Report',
+        ref: 'Parte',
         required: [true, '']
-    }
+    },
+    lat: {},
+    lgn: {},
+    fotos: []
 });
 exports.Comment = (0, mongoose_1.model)('Comment', commentSchema);
