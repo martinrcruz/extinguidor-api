@@ -22,7 +22,7 @@ const userSchema = new Schema({
     type: String,
     enum:["worker", "admin"],
     required:[true,''],
-    default:"worker"
+    
   },
   email: {
     type: String,
