@@ -51,9 +51,11 @@ materialParteRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 }));
 //obtener materialParte
-materialParteRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+materialParteRouter.get('/:ruta', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const ruta = req.params.ruta;
     try {
-        const materialPartes = yield materialParte_model_1.MaterialParte.find();
+        const materialPartes = yield materialParte_model_1.MaterialParte.find({ ruta: ruta }).populate('material');
+        ;
         res.json({
             ok: true,
             materialPartes: materialPartes

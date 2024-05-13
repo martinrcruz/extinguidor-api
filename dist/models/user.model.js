@@ -25,7 +25,6 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         enum: ["worker", "admin"],
         required: [true, ''],
-        default: "worker"
     },
     email: {
         type: String,
