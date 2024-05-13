@@ -51,9 +51,10 @@ materialParteRouter.get('/', async (req: Request, res: Response) => {
 });
 
 //obtener materialParte
-materialParteRouter.get('/', async (req: Request, res: Response) => {
+materialParteRouter.get('/:ruta', async (req: Request, res: Response) => {
+  const ruta =  req.params.ruta
   try {
-      const materialPartes: IMaterialParte[] = await MaterialParte.find();
+      const materialPartes: IMaterialParte[] = await MaterialParte.find({ ruta: ruta });
       res.json({
           ok: true,
           materialPartes: materialPartes
