@@ -54,7 +54,7 @@ materialParteRouter.get('/', async (req: Request, res: Response) => {
 materialParteRouter.get('/:ruta', async (req: Request, res: Response) => {
   const ruta =  req.params.ruta
   try {
-      const materialPartes: IMaterialParte[] = await MaterialParte.find({ ruta: ruta });
+      const materialPartes: IMaterialParte[] = await MaterialParte.find({ ruta: ruta }).populate('material');;
       res.json({
           ok: true,
           materialPartes: materialPartes
