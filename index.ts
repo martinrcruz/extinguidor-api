@@ -10,6 +10,8 @@ import customerRoutes from "./routes/customersR";
 import zoneRoutes from "./routes/zoneR";
 import parteRoutes from "./routes/parteR";
 import rutaNRoutes from "./routes/rutaNR";
+import materialRouter from "./routes/materialR";
+import materialParteRouter from "./routes/materialparteR";
 
 
 const server = new Server();
@@ -43,6 +45,8 @@ if (process.env.CONFIG_dbNube) {
  server.app.use('/customers', customerRoutes);
  server.app.use('/zone', zoneRoutes);
  server.app.use('/partes', parteRoutes);
+ server.app.use('/material', materialRouter);
+ server.app.use('/materialparte', materialParteRouter);
 
 //levantar server
 server.start( () => {

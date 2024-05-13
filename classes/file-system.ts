@@ -11,17 +11,14 @@ export default class FileSystem{
         return new Promise( (resolve,reject)=>{
             const path =  this.crearCarpetaParte(carpeta, usuario)
             const nombres = this.generarNombre(file.name)
+          
 
-            console.log(path)
-            console.log (nombres)
-
+        const nombreArchivo= file.mv(`${path}/${nombres.url}`, (err:any) =>{
             
-
-        const nombreArchivo= file.mv(`${path}/${nombres.nuevo}`, (err:any) =>{
             if(err){
                 reject(err);
             }else{
-                resolve(nombreArchivo);
+                resolve(nombres);
             }
         })
 
@@ -34,8 +31,9 @@ export default class FileSystem{
         const extencion= nombreArr[nombreArr.length-1];
         const idUnico= uniqid();
         const nombres={
-            original : nombreO ,
-            nuevo : `${idUnico}.${extencion}`
+            name : nombreO ,
+            url : `${idUnico}.${extencion}`,
+            
         }
 
         return nombres
@@ -46,16 +44,50 @@ export default class FileSystem{
 
     private crearCarpetaParte(carpeta:string, usuario: string){
         const pathParte= path.resolve(__dirname, '../uploads',carpeta)
-        const pathParteT= path.resolve(__dirname, '../uploads',carpeta,usuario)
+        const pathParteT= path.resolve(__dirname, '../uploads',carpeta, usuario,)
         const pathParteTemp= pathParteT+ '/temp'
 
         const exsiste= fs.existsSync(pathParte)
+        const exsistet= fs.existsSync(pathParteT)
+        const exsistetemp= fs.existsSync(pathParteTemp)
 
         if(!exsiste){
             fs.mkdirSync(pathParte);
+        }
+        if(!exsistet){
             fs.mkdirSync(pathParteT);
+        }
+        if(!exsistetemp){  
             fs.mkdirSync(pathParteTemp);
         }
+
         return pathParteTemp;
     }
+
+    pasarDeTempAParte( carpeta:string, usuario: string){
+
+        const pathParte= path.resolve(__dirname, '../uploads',carpeta)
+        const pathParteTemp= path.resolve(__dirname, '../uploads',carpeta,usuario,'temp')
+      if(!fs.existsSync( pathParteTemp)){
+        return[];
+      }
+      if(!fs.existsSync( pathParte)){
+        fs.mkdirSync(pathParte);
+      }
+
+      const docTemp =  this.obtenerDocENTemp(carpeta , usuario)
+
+      docTemp.forEach( doc =>{
+        fs.renameSync(`${pathParteTemp}/${doc}`, `${pathParte}/${doc}`)      
+    })
+    return docTemp
+
+    }
+
+    private obtenerDocENTemp(carpeta:string,usuario: string){
+        const pathParteTemp= path.resolve(__dirname, '../uploads',carpeta,usuario,'temp')
+        return fs.readdirSync( pathParteTemp)|| [];
+    }
+
+
 }

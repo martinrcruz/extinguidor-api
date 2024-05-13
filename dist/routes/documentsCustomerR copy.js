@@ -10,22 +10,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const documentsParte_model_1 = require("../models/documentsParte.model");
+const documentsCustomer_model_1 = require("../models/documentsCustomer.model");
 const autenticacion_1 = require("../middlewares/autenticacion");
-const documentsparteRouter = (0, express_1.Router)();
-documentsparteRouter.get('/prueba', (req, res) => {
+const documentscustomerRouter = (0, express_1.Router)();
+documentscustomerRouter.get('/prueba', (req, res) => {
     res.json({
         ok: true,
         mje: 'todo ok'
     });
 });
-documentsparteRouter.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const documentsparte = req.body;
+documentscustomerRouter.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const documentscustomer = req.body;
     try {
-        const documentsparteDB = yield documentsParte_model_1.DocumentParte.create(documentsparte);
+        const documentscustomerDB = yield documentsCustomer_model_1.DocumentCustomer.create(documentscustomer);
         res.status(201).json({
             ok: true,
-            documentsparte: documentsparteDB
+            documentscustomer: documentscustomerDB
         });
     }
     catch (err) {
@@ -33,17 +33,17 @@ documentsparteRouter.post('/create', autenticacion_1.verificarToken, (req, res) 
     }
 }));
 //actializar
-documentsparteRouter.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+documentscustomerRouter.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
-// Ruta para eliminar un Documentsparte por su ID
-documentsparteRouter.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// Ruta para eliminar un Documentscustomer por su ID
+documentscustomerRouter.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
-documentsparteRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+documentscustomerRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const documentspartes = yield documentsParte_model_1.DocumentParte.find();
+        const documentscustomers = yield documentsCustomer_model_1.DocumentCustomer.find();
         res.json({
             ok: true,
-            documentspartes: documentspartes
+            documentscustomers: documentscustomers
         });
     }
     catch (error) {

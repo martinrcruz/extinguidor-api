@@ -10,22 +10,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const material_model_1 = require("../models/material.model");
+const materialParte_model_1 = require("../models/materialParte.model");
 const autenticacion_1 = require("../middlewares/autenticacion");
-const materialRouter = (0, express_1.Router)();
-materialRouter.get('/prueba', (req, res) => {
+const materialParteRouter = (0, express_1.Router)();
+materialParteRouter.get('/prueba', (req, res) => {
     res.json({
         ok: true,
         mje: 'todo ok'
     });
 });
-materialRouter.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const material = req.body;
+materialParteRouter.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const materialParte = req.body;
     try {
-        const materialDB = yield material_model_1.Material.create(material);
+        const materialParteDB = yield materialParte_model_1.MaterialParte.create(materialParte);
         res.status(201).json({
             ok: true,
-            material: materialDB
+            materialParte: materialParteDB
         });
     }
     catch (err) {
@@ -33,34 +33,34 @@ materialRouter.post('/create', autenticacion_1.verificarToken, (req, res) => __a
     }
 }));
 //actializar
-materialRouter.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+materialParteRouter.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
-// Ruta para eliminar un Material por su ID
-materialRouter.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// Ruta para eliminar un MaterialParte por su ID
+materialParteRouter.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
-materialRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+materialParteRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const materials = yield material_model_1.Material.find();
+        const materialPartes = yield materialParte_model_1.MaterialParte.find().populate('material');
         res.json({
             ok: true,
-            materials: materials
+            materialPartes: materialPartes
         });
     }
     catch (error) {
         res.status(500).json({ message: 'Error al obtener los Zipcodes', error });
     }
 }));
-//obtener material
-materialRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+//obtener materialParte
+materialParteRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const materials = yield material_model_1.Material.find();
+        const materialPartes = yield materialParte_model_1.MaterialParte.find();
         res.json({
             ok: true,
-            materials: materials
+            materialPartes: materialPartes
         });
     }
     catch (error) {
-        res.status(500).json({ message: 'Error al obtener materials', error });
+        res.status(500).json({ message: 'Error al obtener materialPartes', error });
     }
 }));
-exports.default = materialRouter;
+exports.default = materialParteRouter;

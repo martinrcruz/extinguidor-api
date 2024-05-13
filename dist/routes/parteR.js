@@ -16,6 +16,7 @@ const express_1 = require("express");
 const autenticacion_1 = require("../middlewares/autenticacion");
 const parte_model_1 = require("../models/parte.model");
 const file_system_1 = __importDefault(require("../classes/file-system"));
+const documentsParte_model_1 = require("../models/documentsParte.model");
 const parteRoutes = (0, express_1.Router)();
 const fileSystem = new file_system_1.default();
 parteRoutes.get('/prueba', (req, res) => {
@@ -28,8 +29,12 @@ parteRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awai
     const parte = req.body;
     const programado = Number(req.body.programado);
     const duracion = Number(req.body.duracion) * 12;
-    const documentsParte = req.body.doc;
+    const documentsParte = req.body.docs;
     let suma = 0;
+    const carpeta = 'partes';
+    if (documentsParte) {
+        const doc = fileSystem.pasarDeTempAParte(carpeta, req.user._id);
+    }
     const repetir = req.body.rep;
     if (repetir) {
         try {
@@ -37,16 +42,22 @@ parteRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awai
             let partesGuardadas = [];
             const nuevoParte = Object.assign(Object.assign({}, parte), { date: new Date(fechaActual) });
             const parteDB = yield parte_model_1.Parte.create(nuevoParte);
-            for (let i = 0; i < documentsParte.length; i++) {
-                const nuevoDoc = Object.assign(Object.assign({}, documentsParte[i]), { parte: parteDB._id });
+            if (documentsParte) {
+                for (let i = 0; i < documentsParte.length; i++) {
+                    const nuevoDoc = Object.assign(Object.assign({}, documentsParte[i]), { parte: parteDB._id });
+                    const documentsparteDB = yield documentsParte_model_1.DocumentParte.create(nuevoDoc);
+                }
             }
             partesGuardadas.push(parteDB);
             while (suma < duracion) {
                 fechaActual.setMonth(fechaActual.getMonth() + programado);
                 const nuevoParte = Object.assign(Object.assign({}, parte), { date: new Date(fechaActual) });
                 const parteDB = yield parte_model_1.Parte.create(nuevoParte);
-                for (let i = 0; i < documentsParte.length; i++) {
-                    const nuevoDoc = Object.assign(Object.assign({}, documentsParte[i]), { parte: parteDB._id });
+                if (documentsParte) {
+                    for (let i = 0; i < documentsParte.length; i++) {
+                        const nuevoDoc = Object.assign(Object.assign({}, documentsParte[i]), { parte: parteDB._id });
+                        //    const documentsparteDB = await DocumentParte.create(nuevoDoc);
+                    }
                 }
                 partesGuardadas.push(parteDB);
                 suma = suma + programado;
@@ -59,14 +70,17 @@ parteRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awai
             }
         }
         catch (err) {
-            res.status(500).json({ message: 'Error al crear partes', err });
+            res.status(500).json({ message: 'Error al crear partes  1', err });
         }
     }
     else {
         try {
             const parteDB = yield parte_model_1.Parte.create(parte);
-            for (let i = 0; i < documentsParte.length; i++) {
-                const nuevoDoc = Object.assign(Object.assign({}, documentsParte[i]), { parte: parteDB._id });
+            if (documentsParte) {
+                for (let i = 0; i < documentsParte.length; i++) {
+                    const nuevoDoc = Object.assign(Object.assign({}, documentsParte[i]), { parte: parteDB._id });
+                    const documentsparteDB = yield documentsParte_model_1.DocumentParte.create(nuevoDoc);
+                }
             }
             res.status(201).json({
                 ok: true,
@@ -204,21 +218,22 @@ parteRoutes.post('/upload', [autenticacion_1.verificarToken], (req, res) => __aw
     if (!req.files) {
         return res.status(400).json({
             ok: false,
-            msg: 'No se ha subido ningun archivo'
+            msg: 'No se ha subido ningun archivo!!!'
         });
     }
     const file = req.files.archivo;
     if (!file) {
         return res.status(400).json({
             ok: false,
-            msg: 'No se ha subido ningun archivo'
+            file: req.file,
+            msg: 'No se ha subido ningun archivo2'
         });
     }
     const carpeta = 'partes';
-    yield fileSystem.guardarFileTemp(file, carpeta, req.user._id);
+    const nombres = yield fileSystem.guardarFileTemp(file, carpeta, req.user._id);
     return res.json({
         ok: true,
-        file: file
+        nombres: nombres
     });
 }));
 exports.default = parteRoutes;

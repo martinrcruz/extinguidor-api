@@ -15,6 +15,8 @@ const customersR_1 = __importDefault(require("./routes/customersR"));
 const zoneR_1 = __importDefault(require("./routes/zoneR"));
 const parteR_1 = __importDefault(require("./routes/parteR"));
 const rutaNR_1 = __importDefault(require("./routes/rutaNR"));
+const materialR_1 = __importDefault(require("./routes/materialR"));
+const materialparteR_1 = __importDefault(require("./routes/materialparteR"));
 const server = new server_1.default();
 //body parser
 server.app.use(body_parser_1.default.urlencoded({ extended: true }));
@@ -44,6 +46,8 @@ server.app.use('/rutasn', rutaNR_1.default);
 server.app.use('/customers', customersR_1.default);
 server.app.use('/zone', zoneR_1.default);
 server.app.use('/partes', parteR_1.default);
+server.app.use('/material', materialR_1.default);
+server.app.use('/materialparte', materialparteR_1.default);
 //levantar server
 server.start(() => {
     console.log(`Servidor corriendo en puerto ${server.port}`);

@@ -3,7 +3,8 @@ import { IRuta, Ruta } from '../models/rutas.model';
 import { verificarToken } from '../middlewares/autenticacion';
 import { IParte, Parte } from '../models/parte.model';
 import { FileUpload } from '../interfaces/file-upload';
-import FileSystem from '../classes/file-system'
+import FileSystem from '../classes/file-system';
+import { IDocumentParte, DocumentParte } from '../models/documentsParte.model';
 
 
 const parteRoutes = Router();
@@ -18,12 +19,21 @@ parteRoutes.get('/prueba', (req: Request, res: Response) => {
   })
 });
 
-parteRoutes.post('/create', verificarToken, async (req: Request, res: Response) => {
+parteRoutes.post('/create',verificarToken, async (req: any, res: Response) => {
+  
   const parte: IParte = req.body;
+  
   const programado = Number(req.body.programado);
   const duracion = Number(req.body.duracion) * 12;
-  const documentsParte = req.body.doc
+  const documentsParte = req.body.docs
   let suma = 0;
+  const carpeta= 'partes'
+  if(documentsParte){
+  const doc = fileSystem.pasarDeTempAParte(carpeta, req.user._id)
+  }
+  
+  
+  
   
   const repetir = req.body.rep;
 
@@ -36,10 +46,14 @@ parteRoutes.post('/create', verificarToken, async (req: Request, res: Response) 
 
       const nuevoParte = { ...parte, date: new Date(fechaActual) };
       const parteDB = await Parte.create(nuevoParte);
-      for (let i = 0; i < documentsParte.length; i++){
-        const nuevoDoc = { ...documentsParte[i], parte: parteDB._id };
-        
+      if(documentsParte){
+        for (let i = 0; i < documentsParte.length; i++){
+          const nuevoDoc = { ...documentsParte[i], parte: parteDB._id };
+          const documentsparteDB = await DocumentParte.create(nuevoDoc);
+          
+        }
       }
+      
       
       partesGuardadas.push(parteDB)
 
@@ -47,10 +61,12 @@ parteRoutes.post('/create', verificarToken, async (req: Request, res: Response) 
         fechaActual.setMonth(fechaActual.getMonth() + programado);
         const nuevoParte = { ...parte, date: new Date(fechaActual) };
         const parteDB = await Parte.create(nuevoParte);
+        if(documentsParte){
         for (let i = 0; i < documentsParte.length; i++){
           const nuevoDoc = { ...documentsParte[i], parte: parteDB._id };
-         
+      //    const documentsparteDB = await DocumentParte.create(nuevoDoc);
         }
+      }
         partesGuardadas.push(parteDB)
         suma = suma + programado
 
@@ -65,7 +81,7 @@ parteRoutes.post('/create', verificarToken, async (req: Request, res: Response) 
         });
       }
     } catch (err) {
-      res.status(500).json({ message: 'Error al crear partes', err });
+      res.status(500).json({ message: 'Error al crear partes  1', err });
     }
 
 
@@ -75,9 +91,12 @@ parteRoutes.post('/create', verificarToken, async (req: Request, res: Response) 
   } else {
     try {
       const parteDB = await Parte.create(parte);
-      for (let i = 0; i < documentsParte.length; i++){
-        const nuevoDoc = { ...documentsParte[i], parte: parteDB._id };
-        
+      if(documentsParte){
+        for (let i = 0; i < documentsParte.length; i++){
+          const nuevoDoc = { ...documentsParte[i], parte: parteDB._id };
+          const documentsparteDB = await DocumentParte.create(nuevoDoc);
+          
+        }
       }
       res.status(201).json({
         ok: true,
@@ -232,22 +251,23 @@ parteRoutes.post('/upload',[verificarToken], async (req:any, res:Response)=>{
   if(!req.files){
     return res.status(400).json({
       ok:false,
-      msg:'No se ha subido ningun archivo'
+      msg:'No se ha subido ningun archivo!!!'
     })
   }
   const file: FileUpload= req.files.archivo
   if(!file){
     return res.status(400).json({
       ok:false,
-      msg:'No se ha subido ningun archivo'
+      file: req.file,
+      msg:'No se ha subido ningun archivo2'
     })
   }
   const carpeta= 'partes'
-  await fileSystem.guardarFileTemp(file, carpeta, req.user._id);
+  const nombres = await fileSystem.guardarFileTemp(file, carpeta, req.user._id);
 
   return res.json({
     ok:true,
-    file: file
+    nombres: nombres
   })
 
   
