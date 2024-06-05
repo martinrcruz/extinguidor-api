@@ -28,14 +28,10 @@ parteRoutes.get('/prueba', (req, res) => {
 parteRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const parte = req.body;
     const programado = Number(req.body.programado);
-    const duracion = Number(req.body.duracion) * 12;
+    const duracion = Number(1) * 12;
     const documentsParte = req.body.docs;
     let suma = 0;
-    const carpeta = 'partes';
-    if (documentsParte) {
-        const doc = fileSystem.pasarDeTempAParte(carpeta, req.user._id);
-    }
-    const repetir = req.body.rep;
+    const repetir = req.body.periodicos;
     if (repetir) {
         try {
             let fechaActual = new Date(parte.date);
@@ -92,7 +88,7 @@ parteRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awai
         }
     }
 }));
-//actializar
+//actualizar
 parteRoutes.post('/update', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const idparte = req.body._id;
     const updatedParteData = req.body;
@@ -123,6 +119,19 @@ parteRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
     catch (error) {
         res.status(500).json({ message: 'Error al obtener los partes', error });
+    }
+}));
+parteRoutes.get('/cotrato/:contrato', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const contrato = req.params.contrato;
+    try {
+        const partes = yield parte_model_1.Parte.find({ customer: contrato }).populate('ruta').populate('zone');
+        res.json({
+            ok: true,
+            partes: partes
+        });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Error al obtener los rutas', error });
     }
 }));
 parteRoutes.get('/ruta/:ruta', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -192,7 +201,7 @@ parteRoutes.get('/noasignado/:fecha', (req, res) => __awaiter(void 0, void 0, vo
 parteRoutes.get('/asignado/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const fechaInicio = new Date();
     const fechaLimite = new Date();
-    fechaLimite.setDate(fechaInicio.getDate() + 30);
+    fechaLimite.setDate(fechaInicio.getDate() - 1);
     const formattedStartDate = `${fechaInicio.getFullYear()}-${(fechaInicio.getMonth() + 1).toString().padStart(2, '0')}-${fechaInicio.getDate().toString().padStart(2, '0')}`;
     const formattedEndDate = `${fechaLimite.getFullYear()}-${(fechaLimite.getMonth() + 1).toString().padStart(2, '0')}-${fechaLimite.getDate().toString().padStart(2, '0')}`;
     const asignado = true;
@@ -200,7 +209,32 @@ parteRoutes.get('/asignado/', (req, res) => __awaiter(void 0, void 0, void 0, fu
         const partes = yield parte_model_1.Parte.find({
             asignado: asignado,
             date: {
-                $gte: formattedStartDate,
+                // $gte: formattedStartDate,
+                $lte: formattedEndDate
+            }
+        }).populate('customer').populate('zone').populate('ruta');
+        res.json({
+            ok: true,
+            partes: partes,
+        });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Error al obtener los partes', error });
+    }
+}));
+parteRoutes.get('/nofin/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const fechaInicio = new Date();
+    const fechaLimite = new Date();
+    fechaLimite.setDate(fechaInicio.getDate() - 1);
+    const formattedStartDate = `${fechaInicio.getFullYear()}-${(fechaInicio.getMonth() + 1).toString().padStart(2, '0')}-${fechaInicio.getDate().toString().padStart(2, '0')}`;
+    const formattedEndDate = `${fechaLimite.getFullYear()}-${(fechaLimite.getMonth() + 1).toString().padStart(2, '0')}-${fechaLimite.getDate().toString().padStart(2, '0')}`;
+    const asignado = true;
+    try {
+        const partes = yield parte_model_1.Parte.find({
+            asignado: asignado,
+            state: { $ne: 'Finalizado' },
+            date: {
+                // $gte: formattedStartDate,
                 $lte: formattedEndDate
             }
         }).populate('customer').populate('zone').populate('ruta');

@@ -6,6 +6,7 @@ const rutasSchema = new mongoose_1.Schema({
     name: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'RutaN',
+        required: [true, ''],
     },
     state: {
         type: String,
@@ -23,6 +24,10 @@ const rutasSchema = new mongoose_1.Schema({
     vehicle: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Vehicle',
+    },
+    eliminado: {
+        type: Boolean,
+        default: false
     }
 });
 exports.Ruta = (0, mongoose_1.model)('Ruta', rutasSchema);

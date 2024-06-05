@@ -50,4 +50,18 @@ customerRoutes.get('/', async (req: Request, res: Response) => {
   }
 });
 
+customerRoutes.get('/:id', verificarToken, async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+      const customer: ICustomer| null = await Customer.findById(id).populate('zone');
+      res.json({
+          ok: true,
+          customer: customer
+      });
+  } catch (error) {
+      res.status(500).json({ message: 'Error al obtener customers', error });
+  }
+});
+
 export default customerRoutes;

@@ -30,17 +30,32 @@ rutaRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __await
         });
     }
     catch (err) {
-        res.status(500).json({ message: 'Error al admin', err });
+        res.status(500).json({ message: 'Error ', err });
     }
 }));
 //actializar
-rutaRoutes.put('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaRoutes.post('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const idruta = req.body._id;
+    const updatedRutaData = req.body;
+    console.log(updatedRutaData);
+    try {
+        const rutaDB = yield rutas_model_1.Ruta.findByIdAndUpdate(idruta, updatedRutaData, { new: true });
+        if (!rutaDB) {
+            return res.status(404).json({ message: 'Parte no encontrada' });
+        }
+        res.status(200).json({
+            ok: true,
+            ruta: rutaDB
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: 'Error al actualizar la ruta', err });
+    }
 }));
-// Ruta para eliminar un Ruta por su ID
-rutaRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaRoutes.get('/:id', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     try {
-        const ruta = yield rutas_model_1.Ruta.findById(id);
+        const ruta = yield rutas_model_1.Ruta.findById(id).populate('vehicle').populate('users').populate('name');
         if (ruta) {
             res.json({
                 ok: true,
@@ -56,8 +71,9 @@ rutaRoutes.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 }));
 rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const eliminado = false;
     try {
-        const rutas = yield rutas_model_1.Ruta.find().populate('vehicle').populate('users').populate('name');
+        const rutas = yield rutas_model_1.Ruta.find({ eliminado: eliminado }).populate('vehicle').populate('users').populate('name');
         res.json({
             ok: true,
             rutas: rutas
@@ -69,8 +85,9 @@ rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 }));
 rutaRoutes.get('/fecha/:date', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const date = req.params.date;
+    const eliminado = false;
     try {
-        const rutas = yield rutas_model_1.Ruta.find({ date: date }).populate('users').populate('vehicle').populate('name');
+        const rutas = yield rutas_model_1.Ruta.find({ date: date }, { eliminado: eliminado }).populate('users').populate('vehicle').populate('name');
         res.json({
             ok: true,
             rutas: rutas

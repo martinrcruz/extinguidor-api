@@ -12,6 +12,7 @@ import parteRoutes from "./routes/parteR";
 import rutaNRoutes from "./routes/rutaNR";
 import materialRouter from "./routes/materialR";
 import materialParteRouter from "./routes/materialparteR";
+import facturacionRoutes from "./routes/facturacionR";
 
 
 const server = new Server();
@@ -39,6 +40,7 @@ if (process.env.CONFIG_dbNube) {
 };
 //Rutas
  server.app.use('/user', userRoutes);
+ server.app.use('/facturacion', facturacionRoutes);
  server.app.use('/vehicle', vehicleRoutes);
  server.app.use('/rutas', rutaRoutes);
  server.app.use('/rutasn', rutaNRoutes)

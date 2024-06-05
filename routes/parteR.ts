@@ -24,18 +24,11 @@ parteRoutes.post('/create',verificarToken, async (req: any, res: Response) => {
   const parte: IParte = req.body;
   
   const programado = Number(req.body.programado);
-  const duracion = Number(req.body.duracion) * 12;
+  const duracion = Number(1) * 12;
   const documentsParte = req.body.docs
   let suma = 0;
-  const carpeta= 'partes'
-  if(documentsParte){
-  const doc = fileSystem.pasarDeTempAParte(carpeta, req.user._id)
-  }
   
-  
-  
-  
-  const repetir = req.body.rep;
+  const repetir = req.body.periodicos;
 
   if (repetir) {
     try {
@@ -112,7 +105,7 @@ parteRoutes.post('/create',verificarToken, async (req: any, res: Response) => {
 });
 
 
-//actializar
+//actualizar
 parteRoutes.post('/update', async (req: any, res: Response) => {
   const idparte = req.body._id
   const updatedParteData: IParte = req.body;
@@ -149,6 +142,21 @@ parteRoutes.get('/', async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error al obtener los partes', error });
   }
 });
+
+parteRoutes.get('/cotrato/:contrato', async (req: Request, res: Response) => {
+  const contrato = req.params.contrato
+
+  try {
+    const partes: IParte[] = await Parte.find({ customer: contrato }).populate('ruta').populate('zone');
+    res.json({
+      ok: true,
+      partes: partes
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener los rutas', error });
+  }
+});
+
 parteRoutes.get('/ruta/:ruta', async (req: Request, res: Response) => {
   const ruta = req.params.ruta
 
@@ -222,7 +230,7 @@ parteRoutes.get('/asignado/', async (req: Request, res: Response) => {
 
   const fechaInicio = new Date();
   const fechaLimite = new Date();
-  fechaLimite.setDate(fechaInicio.getDate() + 30);
+  fechaLimite.setDate(fechaInicio.getDate() -1);
   const formattedStartDate = `${fechaInicio.getFullYear()}-${(fechaInicio.getMonth() + 1).toString().padStart(2, '0')}-${fechaInicio.getDate().toString().padStart(2, '0')}`;
   const formattedEndDate = `${fechaLimite.getFullYear()}-${(fechaLimite.getMonth() + 1).toString().padStart(2, '0')}-${fechaLimite.getDate().toString().padStart(2, '0')}`;
   const asignado = true;
@@ -231,7 +239,35 @@ parteRoutes.get('/asignado/', async (req: Request, res: Response) => {
       asignado: asignado,
       date:
       {
-        $gte: formattedStartDate,
+       // $gte: formattedStartDate,
+        $lte: formattedEndDate
+      }
+    }).populate('customer').populate('zone').populate('ruta');
+    res.json({
+      ok: true,
+      partes: partes,
+
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener los partes', error });
+  }
+});
+
+parteRoutes.get('/nofin/', async (req: Request, res: Response) => {
+
+  const fechaInicio = new Date();
+  const fechaLimite = new Date();
+  fechaLimite.setDate(fechaInicio.getDate() -1);
+  const formattedStartDate = `${fechaInicio.getFullYear()}-${(fechaInicio.getMonth() + 1).toString().padStart(2, '0')}-${fechaInicio.getDate().toString().padStart(2, '0')}`;
+  const formattedEndDate = `${fechaLimite.getFullYear()}-${(fechaLimite.getMonth() + 1).toString().padStart(2, '0')}-${fechaLimite.getDate().toString().padStart(2, '0')}`;
+  const asignado = true;
+  try {
+    const partes: IParte[] = await Parte.find({
+      asignado: asignado,
+      state: { $ne: 'Finalizado' },
+      date:
+      {
+       // $gte: formattedStartDate,
         $lte: formattedEndDate
       }
     }).populate('customer').populate('zone').populate('ruta');

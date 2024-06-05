@@ -37,6 +37,9 @@ const customerSchema = new Schema({
     description: {
         type: String,
     },
+    gestiona: {
+        type: String,
+    },
     photo: {
         type: String,
         required: [true, ""],
@@ -65,6 +68,7 @@ export interface ICustomer extends Document {
     description: string;
     photo: string;
     createdAt: Date;
+    gestiona: string;
 
 }
 

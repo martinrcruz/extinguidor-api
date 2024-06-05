@@ -23,21 +23,36 @@ rutaRoutes.post('/create', verificarToken, async (req: Request, res: Response) =
                 ruta: rutaDB
               });
             } catch (err) {
-              res.status(500).json({ message: 'Error al admin', err });
+              res.status(500).json({ message: 'Error ', err });
             }
 });
 
 
 //actializar
-rutaRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
+rutaRoutes.post('/update', verificarToken, async (req: any, res: Response) => {
+  const idruta = req.body._id
+  const updatedRutaData: IRuta = req.body;
+  console.log(updatedRutaData)
+  try {
+    const rutaDB = await Ruta.findByIdAndUpdate(idruta, updatedRutaData, { new: true });
+    if (!rutaDB) {
+      return res.status(404).json({ message: 'Parte no encontrada' });
+    }
+    res.status(200).json({
+      ok: true,
+      ruta: rutaDB
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al actualizar la ruta', err });
+  }
 });
 
-// Ruta para eliminar un Ruta por su ID
-rutaRoutes.delete('/:id', async (req: Request, res: Response) => {
+
+rutaRoutes.get('/:id', verificarToken, async (req: Request, res: Response) => {
   const { id } = req.params;
 
     try {
-        const ruta: IRuta | null = await Ruta.findById(id);
+        const ruta: IRuta | null = await Ruta.findById(id).populate('vehicle').populate('users').populate('name');
         if (ruta) {
             res.json({
                 ok: true,
@@ -53,8 +68,9 @@ rutaRoutes.delete('/:id', async (req: Request, res: Response) => {
 });
 
 rutaRoutes.get('/', async (req: Request, res: Response) => {
+  const eliminado= false
   try {
-    const rutas: IRuta[] = await Ruta.find().populate('vehicle').populate('users').populate('name');
+    const rutas: IRuta[] = await Ruta.find({ eliminado: eliminado }).populate('vehicle').populate('users').populate('name');
     res.json({
       ok: true,
       rutas: rutas
@@ -65,9 +81,9 @@ rutaRoutes.get('/', async (req: Request, res: Response) => {
 });
 rutaRoutes.get('/fecha/:date', async (req: Request, res: Response) => {
   const date =  req.params.date
-  
+  const eliminado= false
   try {
-    const rutas: IRuta[] = await Ruta.find({ date: date }).populate('users').populate('vehicle').populate('name');
+    const rutas: IRuta[] = await Ruta.find({ date: date },{ eliminado: eliminado }).populate('users').populate('vehicle').populate('name');
     res.json({
       ok: true,
       rutas: rutas

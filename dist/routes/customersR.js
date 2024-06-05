@@ -50,4 +50,17 @@ customerRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function
         res.status(500).json({ message: 'Error al obtener customers', error });
     }
 }));
+customerRoutes.get('/:id', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    try {
+        const customer = yield customers_model_1.Customer.findById(id).populate('zone');
+        res.json({
+            ok: true,
+            customer: customer
+        });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Error al obtener customers', error });
+    }
+}));
 exports.default = customerRoutes;

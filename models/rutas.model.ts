@@ -5,6 +5,7 @@ const rutasSchema = new Schema({
     name: {
         type: Schema.Types.ObjectId,
         ref: 'RutaN',
+        required:[true,''],
     },
     state: {
         type: String,
@@ -22,6 +23,10 @@ const rutasSchema = new Schema({
     vehicle: {
         type: Schema.Types.ObjectId,
         ref: 'Vehicle', 
+    },
+    eliminado:{
+        type: Boolean,
+        default: false
     }
    
 
@@ -32,8 +37,10 @@ export interface IRuta extends Document {
     name: string;
     state: string;
     date: Date;
-    vehicle: string;
-    users:[];
+    vehicle?: string;
+    users?:[];
+    createdDate: Date;
+    eliminado: boolean;
     
 }
 

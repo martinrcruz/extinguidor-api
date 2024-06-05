@@ -7,18 +7,31 @@ const parteSchema = new mongoose_1.Schema({
         type: String,
         required: [true, 'name is required'],
     },
+    facturacion: {
+        type: Number,
+        default: 0
+    },
     state: {
         type: String,
-        enum: ["Pendiente", "EnProceso", "Finalizado"],
+        enum: ["Baja", "Pendiente", "EnProceso", "Finalizado"],
         required: [true, ''],
         default: "Pendiente"
     },
     type: {
         type: String,
-        enum: ["Instalacion", "Mantenimiento", "Reparacion"],
+        enum: ["Obra", "Mantenimiento", "Correctivo", "Visitas"],
+        required: [true, ''],
+    },
+    categoria: {
+        type: String,
+        enum: ["Extintores", "Incendio", "Robo", "CCTV", "Pasiva"],
         required: [true, ''],
     },
     asignado: {
+        type: Boolean,
+        default: false
+    },
+    periodicos: {
         type: Boolean,
         default: false
     },
@@ -43,6 +56,16 @@ const parteSchema = new mongoose_1.Schema({
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Customer',
         required: [true, '']
+    },
+    createdDate: {
+        type: Date,
+    },
+    eliminado: {
+        type: Boolean,
+        default: false
     }
+});
+parteSchema.pre('save', function () {
+    this.createdDate = new Date();
 });
 exports.Parte = (0, mongoose_1.model)('Parte', parteSchema);

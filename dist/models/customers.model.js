@@ -38,6 +38,9 @@ const customerSchema = new mongoose_1.Schema({
     description: {
         type: String,
     },
+    gestiona: {
+        type: String,
+    },
     photo: {
         type: String,
         required: [true, ""],

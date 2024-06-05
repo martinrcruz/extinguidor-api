@@ -17,6 +17,7 @@ const parteR_1 = __importDefault(require("./routes/parteR"));
 const rutaNR_1 = __importDefault(require("./routes/rutaNR"));
 const materialR_1 = __importDefault(require("./routes/materialR"));
 const materialparteR_1 = __importDefault(require("./routes/materialparteR"));
+const facturacionR_1 = __importDefault(require("./routes/facturacionR"));
 const server = new server_1.default();
 //body parser
 server.app.use(body_parser_1.default.urlencoded({ extended: true }));
@@ -40,6 +41,7 @@ else {
 ;
 //Rutas
 server.app.use('/user', userR_1.default);
+server.app.use('/facturacion', facturacionR_1.default);
 server.app.use('/vehicle', vehicleR_1.default);
 server.app.use('/rutas', rutaR_1.default);
 server.app.use('/rutasn', rutaNR_1.default);
