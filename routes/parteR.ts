@@ -143,7 +143,7 @@ parteRoutes.get('/', async (req: Request, res: Response) => {
   }
 });
 
-parteRoutes.get('/cotrato/:contrato', async (req: Request, res: Response) => {
+parteRoutes.get('/contrato/:contrato', async (req: Request, res: Response) => {
   const contrato = req.params.contrato
 
   try {
@@ -183,6 +183,7 @@ parteRoutes.get('/noasignados/', async (req: Request, res: Response) => {
   try {
     const partes: IParte[] = await Parte.find({
       asignado: asignado,
+      eliminado: false,
       date:
       {
         $gte: formattedStartDate,
