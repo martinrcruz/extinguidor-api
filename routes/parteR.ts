@@ -5,6 +5,7 @@ import { IParte, Parte } from '../models/parte.model';
 import { FileUpload } from '../interfaces/file-upload';
 import FileSystem from '../classes/file-system';
 import { IDocumentParte, DocumentParte } from '../models/documentsParte.model';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 
 const parteRoutes = Router();
@@ -309,6 +310,34 @@ parteRoutes.post('/upload',[verificarToken], async (req:any, res:Response)=>{
 
   
 })
+
+/**
+ * GET /partes/noAsignadosEnMes
+ * Query param: ?date=YYYY-MM-DD
+ * Devuelve partes con asignado=false y la fecha en el mes de date
+ */
+parteRoutes.get('/noAsignadosEnMes', async (req: Request, res: Response) => {
+  try {
+    const dateStr = req.query.date as string;
+    if (!dateStr) {
+      return res.status(400).json({ ok: false, message: 'Falta query param date' });
+    }
+
+    const fecha = new Date(dateStr);
+    const start = startOfMonth(fecha); // 1er día del mes
+    const end = endOfMonth(fecha);     // último día del mes
+
+    const partes = await Parte.find({
+      asignado: false,
+      date: { $gte: start, $lte: end }
+    }).exec();
+
+    res.json({ ok: true, partes });
+  } catch (err) {
+    console.error('Error GET /partes/noAsignadosEnMes', err);
+    res.status(500).json({ ok: false, err });
+  }
+});
 
 
 export default parteRoutes;

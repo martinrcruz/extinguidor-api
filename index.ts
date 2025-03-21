@@ -13,6 +13,8 @@ import rutaNRoutes from "./routes/rutaNR";
 import materialRouter from "./routes/materialR";
 import materialParteRouter from "./routes/materialparteR";
 import facturacionRoutes from "./routes/facturacionR";
+import alertaRouter from "./routes/alertR";
+import herramientaRoutes from "./routes/herramientaR";
 
 
 const server = new Server();
@@ -30,14 +32,11 @@ server.app.use( cors ( { origin: '*',
                            methods: 'GET, POST, OPTIONS, PUT, DELETE',
                         } ) );
 
-if (process.env.CONFIG_dbNube) {
-    mongoose.connect(process.env.CONFIG_dbNube)
+    mongoose.connect("mongodb+srv://devsquaadsextinguidor:dFuBc8XttwIsU7pT@cluster0.zvnsihq.mongodb.net/")
         .then(() => console.log('base de datos online'))
 
         .catch((err) => console.log(err));
-}else{
-    console.log('no se conecto a la bd')
-};
+
 //Rutas
  server.app.use('/user', userRoutes);
  server.app.use('/facturacion', facturacionRoutes);
@@ -49,6 +48,8 @@ if (process.env.CONFIG_dbNube) {
  server.app.use('/partes', parteRoutes);
  server.app.use('/material', materialRouter);
  server.app.use('/materialparte', materialParteRouter);
+ server.app.use('/alertas', alertaRouter);
+ server.app.use('/herramientas', herramientaRoutes)
 
 //levantar server
 server.start( () => {

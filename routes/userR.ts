@@ -34,6 +34,7 @@ userRoutes.post('/create', async (req: Request, res: Response) => {
 userRoutes.post('/login', (req: Request, res: Response) => {
 
     const body = req.body;
+    console.log(req.body)
     User.findOne({ email: body.email }).select('+password').then(userDB => {
 
         if (!userDB) {
@@ -42,6 +43,7 @@ userRoutes.post('/login', (req: Request, res: Response) => {
                 message: 'usuario no encontrado'
             });
         }
+
         if (userDB?.compararPassword(body.password)) {
             const tokenUser = Token.getJwtToken({
                 _id: userDB._id,
@@ -71,16 +73,37 @@ userRoutes.post('/login', (req: Request, res: Response) => {
 
 
 })
-//actializar
+
+
 userRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
-    const id = req.user._id;
-    console.log(req.user._id)
-    const datosActualizados: IUser = req.body;
-    if (req.body.password) {
-        datosActualizados.password = bcrypt.hashSync(req.body.password, 10);
+    const id = req.body._id;
+
+    // Clonamos los datos enviados en el body
+    const datosActualizados: any = { ...req.body };
+
+    // Eliminamos campos inmutables
+    delete datosActualizados._id;
+
+    // Si se envía nueva contraseña, la encriptamos
+    if (datosActualizados.password) {
+        datosActualizados.password = bcrypt.hashSync(datosActualizados.password, 10);
     }
 
     try {
+        // Obtenemos el usuario actual desde la BD
+        const currentUser = await User.findById(id);
+
+        console.log(currentUser!.email);
+        console.log(datosActualizados.email);
+
+        // Validamos el email solo si se envía y es distinto al correo actual del usuario en BD
+        if (datosActualizados.email && currentUser && datosActualizados.email !== currentUser.email) {
+            const duplicate = await User.findOne({ email: datosActualizados.email, _id: { $ne: id } });
+            if (duplicate) {
+                return res.status(400).json({ message: 'El email ya está en uso por otro usuario' });
+            }
+        }
+
         const userActualizado: IUser | null = await User.findByIdAndUpdate(id, datosActualizados, { new: true });
         if (userActualizado) {
             const tokenUser = Token.getJwtToken({
@@ -91,20 +114,21 @@ userRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
                 phone:  userActualizado.phone,
                 role:   userActualizado.role,
                 junior: userActualizado.junior
-                
-            })
+            });
             res.status(201).json({
                 ok: true,
                 tokenU: tokenUser
-            })
+            });
         } else {
-            res.status(404).json({ message: 'no encontrado' });
+            res.status(404).json({ message: 'Usuario no encontrado' });
         }
     } catch (error) {
         res.status(500).json({ message: 'Error al actualizar el evento', error });
     }
-
 });
+
+
+
 
 // Ruta para eliminar un user por su ID
 

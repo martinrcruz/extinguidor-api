@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  mongodb:
+    # Usamos la imagen oficial de MongoDB en su versión 6.x
+    image: mongo:6.0
+    container_name: mongodb-extintor
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      # Usuario y contraseña para el usuario root
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+      # Nombre de la base de datos que se creará por defecto
+      MONGO_INITDB_DATABASE: extintor
+    volumes:
+      # Mapeamos la carpeta local 'data' al directorio de datos de MongoDB
+      - ./data:/data/db
