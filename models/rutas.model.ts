@@ -22,7 +22,8 @@ const rutasSchema = new Schema({
     }],
     vehicle: {
         type: Schema.Types.ObjectId,
-        ref: 'Vehicle', 
+        ref: 'Vehicle',
+        default: null
     },
     eliminado:{
         type: Boolean,

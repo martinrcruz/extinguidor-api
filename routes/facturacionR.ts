@@ -41,13 +41,20 @@ facturacionRoutes.delete('/:id', async (req: Request, res: Response) => {
 
 facturacionRoutes.get('/', async (req: Request, res: Response) => {
   try {
-      const facturacions: IFacturacion[] = await Facturacion.find();
+
+      const facturacions = await Facturacion.find()
+          .populate({
+              path: 'ruta',
+              select: 'name',
+              populate: { path: 'name', select: 'name' }
+          })
+          .populate({ path: 'parte', select: 'description' })
       res.json({
           ok: true,
           facturacion: facturacions
       });
   } catch (error) {
-      res.status(500).json({ message: 'Error al obtener los zonas', error });
+      res.status(500).json({ message: 'Error al obtener las facturas', error });
   }
 });
 

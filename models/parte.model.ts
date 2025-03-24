@@ -1,97 +1,95 @@
 import { Schema, model, Document } from 'mongoose';
 
 const parteSchema = new Schema({
-
     description: {
         type: String,
-        required: [true, 'name is required'],
-        
+        required: [true, 'Descripción es requerida']
     },
     facturacion: {
-        type: Number, 
-        default:0       
+        type: Number,
+        default: 0
     },
     state: {
         type: String,
-        enum:["Baja","Pendiente", "EnProceso","Finalizado"],
-        required:[true,''],
-        default:"Pendiente"
+        enum: ['Pendiente', 'EnProceso', 'Finalizado'],
+        default: 'Pendiente'
     },
     type: {
         type: String,
-        enum:["Obra", "Mantenimiento","Correctivo","Visitas"],
-        required:[true,''],
-       
+        enum: ['Obra', 'Mantenimiento', 'Correctivo', 'Visitas'],
+        default: 'Mantenimiento'
     },
     categoria: {
         type: String,
-        enum:["Extintores", "Incendio","Robo","CCTV","Pasiva"],
-        required:[true,''],
+        enum: ['Extintores', 'Incendio', 'Robo', 'CCTV', 'Pasiva'],
+        default: 'Extintores'
     },
-    asignado:{
+    asignado: {
         type: Boolean,
         default: false
     },
-    periodicos:{
-        type: Boolean,
-        default: false
-    },
+    /**
+     * Forzaremos day=1 al guardarlo (vía la ruta) para simular mes/año.
+     */
     date: {
         type: Date,
+        required: [true, 'Fecha es requerida']
     },
-    code: {
-        type: String,
-       // required: [true, 'code is required'],
-       // unique: true
-    },
-    zone: {
-        type: Schema.Types.ObjectId,
-        ref: 'Zone',
-        required: [true, '']    
-    },
-    ruta: {
-        type: Schema.Types.ObjectId,
-        ref: 'Ruta',
-        
-          
-    },
+    /**
+     * Apunta al modelo unificado "Customer".
+     */
     customer: {
         type: Schema.Types.ObjectId,
         ref: 'Customer',
-        required: [true, '']    
+        required: [true, 'El cliente es requerido']
     },
-    createdDate: {
-        type: Date,
+    /**
+     * Ruta (opcional).
+     */
+    ruta: {
+        type: Schema.Types.ObjectId,
+        ref: 'Ruta',
+        default: null
     },
-    eliminado:{
+    /**
+     * Campos para partes periódicos:
+     */
+    periodico: {
         type: Boolean,
         default: false
+    },
+    frequency: {
+        type: String,
+        enum: ['Mensual', 'Trimestral', 'Semestral', 'Anual']
+    },
+    endDate: {
+        type: Date
+    },
+    createdDate: {
+        type: Date
     }
-
 });
-parteSchema.pre('save', function(){
-    this.createdDate = new Date();
-})
 
+parteSchema.pre('save', function() {
+    if (!this.createdDate) {
+        this.createdDate = new Date();
+    }
+});
 
 export interface IParte extends Document {
-   
-    code: string;
-    zone: string;
-    customer: string;
-    ruta: string;
-    date: Date;
-    asignado: boolean;
-    periodicos: boolean;
-    type: string;
-    categoria: string;
-    state:  string; 
     description: string;
     facturacion: number;
-    createdDate: Date;
-    eliminado: boolean;
-
-    
+    state: string;
+    type: string;
+    categoria: string;
+    asignado: boolean;
+    date: Date;       // day=1 for month-year
+    customer: string; // Apunta a Customer
+    ruta?: string;
+    periodico: boolean;
+    frequency?: string;
+    endDate?: Date;
+    createdDate?: Date;
 }
 
 export const Parte = model<IParte>('Parte', parteSchema);

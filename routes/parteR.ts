@@ -11,138 +11,205 @@ import { startOfMonth, endOfMonth } from 'date-fns';
 const parteRoutes = Router();
 const fileSystem = new FileSystem();
 
-
-parteRoutes.get('/prueba', (req: Request, res: Response) => {
-
-  res.json({
-    ok: true,
-    mje: 'todo ok'
-  })
-});
-
-parteRoutes.post('/create',verificarToken, async (req: any, res: Response) => {
-  
-  const parte: IParte = req.body;
-  
-  const programado = Number(req.body.programado);
-  const duracion = Number(1) * 12;
-  const documentsParte = req.body.docs
-  let suma = 0;
-  
-  const repetir = req.body.periodicos;
-
-  if (repetir) {
-    try {
-
-      let fechaActual = new Date(parte.date);
-      let partesGuardadas: any[] = [];
-      
-
-      const nuevoParte = { ...parte, date: new Date(fechaActual) };
-      const parteDB = await Parte.create(nuevoParte);
-      if(documentsParte){
-        for (let i = 0; i < documentsParte.length; i++){
-          const nuevoDoc = { ...documentsParte[i], parte: parteDB._id };
-          const documentsparteDB = await DocumentParte.create(nuevoDoc);
-          
-        }
-      }
-      
-      
-      partesGuardadas.push(parteDB)
-
-      while (suma < duracion) {
-        fechaActual.setMonth(fechaActual.getMonth() + programado);
-        const nuevoParte = { ...parte, date: new Date(fechaActual) };
-        const parteDB = await Parte.create(nuevoParte);
-        if(documentsParte){
-        for (let i = 0; i < documentsParte.length; i++){
-          const nuevoDoc = { ...documentsParte[i], parte: parteDB._id };
-      //    const documentsparteDB = await DocumentParte.create(nuevoDoc);
-        }
-      }
-        partesGuardadas.push(parteDB)
-        suma = suma + programado
-
-
-
-      }
-
-      if (suma >= duracion) {
-        res.status(201).json({
-          ok: true,
-          partes: partesGuardadas,
-        });
-      }
-    } catch (err) {
-      res.status(500).json({ message: 'Error al crear partes  1', err });
-    }
-
-
-
-
-
-  } else {
-    try {
-      const parteDB = await Parte.create(parte);
-      if(documentsParte){
-        for (let i = 0; i < documentsParte.length; i++){
-          const nuevoDoc = { ...documentsParte[i], parte: parteDB._id };
-          const documentsparteDB = await DocumentParte.create(nuevoDoc);
-          
-        }
-      }
-      res.status(201).json({
-        ok: true,
-        parte: parteDB
-      });
-    } catch (err) {
-      res.status(500).json({ message: 'Error al crear parte', err });
-    }
-
-  }
-
-
-});
-
-
-//actualizar
-parteRoutes.post('/update', async (req: any, res: Response) => {
-  const idparte = req.body._id
-  const updatedParteData: IParte = req.body;
-  console.log(updatedParteData);
+/**
+ * GET /partes => lista todas, populando “customer” y “ruta”
+ */
+parteRoutes.get('/', async (req: Request, res: Response) => {
   try {
-    const parteDB = await Parte.findByIdAndUpdate(idparte, updatedParteData, { new: true });
+    const partes = await Parte.find()
+        .populate('customer') // unificado
+        .populate('ruta')
+        .exec();
+    res.json({ ok: true, partes });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener partes', error });
+  }
+});
+
+/**
+ * POST /partes/create => crea un parte.
+ * Si periodico=true, genera múltiples partes.
+ * Se fuerza day=1 en la fecha para manejar mes/año.
+ */
+parteRoutes.post('/create', verificarToken, async (req: any, res: Response) => {
+  try {
+    const data = req.body;
+    // Documentos (opc.)
+    const documentsParte = data.docs;
+    delete data.docs;
+
+    // Forzar day=1 en la fecha
+    const fecha = new Date(data.date);
+    fecha.setDate(1);
+    data.date = fecha;
+
+    // Revisar si es periódico
+    if (data.periodico && data.endDate) {
+      const fechaFin = new Date(data.endDate);
+      const inc = getMonthsIncrement(data.frequency);
+
+      let fechaActual = new Date(data.date);
+      const partesGuardadas: IParte[] = [];
+
+      // Crear primera
+      const primerParte = await Parte.create(data);
+      if (documentsParte) {
+        for (const doc of documentsParte) {
+          await DocumentParte.create({ ...doc, parte: primerParte._id });
+        }
+      }
+      partesGuardadas.push(primerParte);
+
+      // Generar recurrences
+      while (true) {
+        fechaActual.setMonth(fechaActual.getMonth() + inc);
+        if (fechaActual > fechaFin) break;
+
+        const otroParte = { ...data, date: new Date(fechaActual) };
+        const otroParteDB = await Parte.create(otroParte);
+        partesGuardadas.push(otroParteDB);
+        // duplicar docs si quieres
+      }
+
+      return res.status(201).json({ ok: true, partes: partesGuardadas });
+
+    } else {
+      // Caso no periódico
+      const parteDB = await Parte.create(data);
+      if (documentsParte) {
+        for (const doc of documentsParte) {
+          await DocumentParte.create({ ...doc, parte: parteDB._id });
+        }
+      }
+      return res.status(201).json({ ok: true, parte: parteDB });
+    }
+  } catch (err) {
+    console.error('Error al crear parte =>', err);
+    res.status(500).json({ message: 'Error al crear parte', err });
+  }
+});
+
+/**
+ * Función auxiliar: Convierte frequency en #meses
+ */
+function getMonthsIncrement(freq?: string): number {
+  switch (freq) {
+    case 'Mensual': return 1;
+    case 'Trimestral': return 3;
+    case 'Semestral': return 6;
+    case 'Anual': return 12;
+    default: return 1;
+  }
+}
+
+/**
+ * POST /partes/update => Actualiza un parte
+ */
+parteRoutes.post('/update', async (req: any, res: Response) => {
+  try {
+    const idparte = req.body._id;
+    // Forzar day=1
+    if (req.body.date) {
+      const d = new Date(req.body.date);
+      d.setDate(1);
+      req.body.date = d;
+    }
+
+    const parteDB = await Parte.findByIdAndUpdate(idparte, req.body, { new: true });
     if (!parteDB) {
       return res.status(404).json({ message: 'Parte no encontrada' });
     }
-    res.status(200).json({
-      ok: true,
-      parte: parteDB
-    });
+    res.status(200).json({ ok: true, parte: parteDB });
   } catch (err) {
     res.status(500).json({ message: 'Error al actualizar la parte', err });
   }
 });
 
-
-parteRoutes.delete('/:id', async (req: Request, res: Response) => {
-
-});
-
-parteRoutes.get('/', async (req: Request, res: Response) => {
-
+/**
+ * GET /partes/:id => obtiene 1 parte
+ */
+parteRoutes.get('/:id', async (req: Request, res: Response) => {
   try {
-    const partes: IParte[] = await Parte.find().populate('customer').populate('zone').populate('ruta');
-
-    res.json({
-      ok: true,
-      partes: partes
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener los partes', error });
+    const parte = await Parte.findById(req.params.id)
+        .populate('customer')
+        .populate('ruta')
+        .exec();
+    if (!parte) {
+      return res.status(404).json({ ok: false, message: 'Parte no encontrada' });
+    }
+    res.json({ ok: true, parte });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al obtener parte', err });
   }
 });
+
+/**
+ * DELETE /partes/:id => elimina un parte
+ */
+parteRoutes.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const parteDeleted = await Parte.findByIdAndDelete(req.params.id);
+    if (!parteDeleted) {
+      return res.status(404).json({ ok: false, message: 'No encontrado' });
+    }
+    res.json({ ok: true, parte: parteDeleted });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al eliminar parte', err });
+  }
+});
+
+/**
+ * GET /partes/noAsignadosEnMes?date=YYYY-MM-DD
+ * Muestra partes asignado=false en ese mes
+ */
+parteRoutes.get('/noAsignadosEnMes', async (req: Request, res: Response) => {
+  try {
+    const dateStr = req.query.date as string;
+    if (!dateStr) {
+      return res.status(400).json({ ok: false, message: 'Falta query param date' });
+    }
+    const fecha = new Date(dateStr);
+    const start = startOfMonth(fecha);
+    const end = endOfMonth(fecha);
+
+    const partes = await Parte.find({
+      asignado: false,
+      date: { $gte: start, $lte: end }
+    }).populate('customer').populate('ruta').exec();
+
+    res.json({ ok: true, partes });
+  } catch (err) {
+    console.error('Error GET /partes/noAsignadosEnMes', err);
+    res.status(500).json({ ok: false, err });
+  }
+});
+
+/**
+ * Ejemplos de endpoints ya existentes como noasignado, asignado, etc.
+ * Los mantienes, actualizando .populate('customer') => 'Customer'
+ */
+
+//subir archivos
+parteRoutes.post('/upload',[verificarToken], async (req:any, res:Response)=>{
+  if(!req.files){
+    return res.status(400).json({
+      ok:false,
+      msg:'No se ha subido ningun archivo!!!'
+    })
+  }
+  const file: FileUpload = req.files.archivo;
+  if(!file){
+    return res.status(400).json({
+      ok:false,
+      file: req.file,
+      msg:'No se ha subido ningun archivo2'
+    });
+  }
+  const carpeta= 'partes';
+  const nombres = await fileSystem.guardarFileTemp(file, carpeta, req.user._id);
+  return res.json({ ok:true, nombres });
+});
+
 
 parteRoutes.get('/contrato/:contrato', async (req: Request, res: Response) => {
   const contrato = req.params.contrato
@@ -282,62 +349,5 @@ parteRoutes.get('/nofin/', async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error al obtener los partes', error });
   }
 });
-
-
-//subir archivos
-parteRoutes.post('/upload',[verificarToken], async (req:any, res:Response)=>{
-  if(!req.files){
-    return res.status(400).json({
-      ok:false,
-      msg:'No se ha subido ningun archivo!!!'
-    })
-  }
-  const file: FileUpload= req.files.archivo
-  if(!file){
-    return res.status(400).json({
-      ok:false,
-      file: req.file,
-      msg:'No se ha subido ningun archivo2'
-    })
-  }
-  const carpeta= 'partes'
-  const nombres = await fileSystem.guardarFileTemp(file, carpeta, req.user._id);
-
-  return res.json({
-    ok:true,
-    nombres: nombres
-  })
-
-  
-})
-
-/**
- * GET /partes/noAsignadosEnMes
- * Query param: ?date=YYYY-MM-DD
- * Devuelve partes con asignado=false y la fecha en el mes de date
- */
-parteRoutes.get('/noAsignadosEnMes', async (req: Request, res: Response) => {
-  try {
-    const dateStr = req.query.date as string;
-    if (!dateStr) {
-      return res.status(400).json({ ok: false, message: 'Falta query param date' });
-    }
-
-    const fecha = new Date(dateStr);
-    const start = startOfMonth(fecha); // 1er día del mes
-    const end = endOfMonth(fecha);     // último día del mes
-
-    const partes = await Parte.find({
-      asignado: false,
-      date: { $gte: start, $lte: end }
-    }).exec();
-
-    res.json({ ok: true, partes });
-  } catch (err) {
-    console.error('Error GET /partes/noAsignadosEnMes', err);
-    res.status(500).json({ ok: false, err });
-  }
-});
-
 
 export default parteRoutes;

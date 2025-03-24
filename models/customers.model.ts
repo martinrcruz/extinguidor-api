@@ -1,21 +1,26 @@
 import { Schema, model, Document } from 'mongoose';
 
+/**
+ * Modelo unificado "Customer" que incluye campos de Customer y Contract.
+ */
 const customerSchema = new Schema({
+
+    // Campos básicos del Customer
     name: {
         type: String,
-        required: [true, ""],
+        required: [true, "Nombre requerido"],
     },
     email: {
         type: String,
-        required: [true, ""],
+        required: [true, "Email requerido"],
     },
     nifCif: {
         type: String,
-        required: [true, ""],
+        required: [true, "NIF/CIF requerido"],
     },
     address: {
         type: String,
-        required: [true, "name is required"],
+        required: [true, "Dirección requerida"],
     },
     zone: {
         type: Schema.Types.ObjectId,
@@ -23,16 +28,15 @@ const customerSchema = new Schema({
     },
     phone: {
         type: String,
-        required: [true, "name is required"],
+        required: [true, "Teléfono requerido"],
     },
-   
     contactName: {
         type: String,
-        required: [true, "name is required"],
+        required: [true, "Nombre de contacto requerido"],
     },
     code: {
         type: String,
-        required: [true, "name is required"],
+        required: [true, "Code requerido"],
     },
     description: {
         type: String,
@@ -42,34 +46,104 @@ const customerSchema = new Schema({
     },
     photo: {
         type: String,
-        required: [true, ""],
         default: 'foto.jpg'
     },
     createdAt: {
+        type: Date
+    },
+
+    // Campos de "Contract" (fusionados)
+    startDate: {
         type: Date,
-        
-    }
+    },
+    endDate: {
+        type: Date,
+    },
+    type: {
+        type: String,
+        enum: ['F', 'E', 'R', 'C'],
+    },
+    contractSystems: [{
+        system: {
+            type: Schema.Types.ObjectId,
+            ref: 'systems'
+        },
+        contractSubsystems:[{
+            subsystem: {
+                type: Schema.Types.ObjectId,
+                ref: 'subsystems'
+            },
+            name: String,
+            instalationDate: Date,
+            expiry: Date,
+            comments: String,
+            photoUrl: String,
+            article: {
+                type: Schema.Types.ObjectId,
+                ref: 'materials'
+            },
+        }]
+    }],
+    averageTime: {
+        type: Number, // minutes
+    },
+    delegation: {
+        type: String,
+    },
+    revisionFrequency: {
+        type: String,
+        enum: ['T', 'S', 'A']
+    },
+    rate: {
+        type: String,
+        enum: ['T', 'S', 'A']
+    },
+    total: Number,
+    documents: [{
+        name: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true
+        }
+    }]
 
 });
 
 customerSchema.pre('save', function(){
-    this.createdAt = new Date();
-})
+    if (!this.createdAt) {
+        this.createdAt = new Date();
+    }
+});
 
 export interface ICustomer extends Document {
-    code: string;
+    // Campos combinados
     name: string;
     email: string;
     nifCif: string;
     address: string;
-    contactName: string;
     zone: string;
     phone: string;
-    description: string;
+    contactName: string;
+    code: string;
+    description?: string;
+    gestiona?: string;
     photo: string;
     createdAt: Date;
-    gestiona: string;
 
+    // "Contract" data
+    startDate?: Date;
+    endDate?: Date;
+    type?: string; // 'F','E','R','C'
+    contractSystems?: Array<any>;
+    averageTime?: number;
+    delegation?: string;
+    revisionFrequency?: string;
+    rate?: string;
+    total?: number;
+    documents?: Array<{ name: string; url: string }>;
 }
 
 export const Customer = model<ICustomer>('Customer', customerSchema);
