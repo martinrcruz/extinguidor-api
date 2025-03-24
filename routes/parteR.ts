@@ -7,7 +7,6 @@ import FileSystem from '../classes/file-system';
 import { IDocumentParte, DocumentParte } from '../models/documentsParte.model';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
-
 const parteRoutes = Router();
 const fileSystem = new FileSystem();
 
@@ -17,7 +16,7 @@ const fileSystem = new FileSystem();
 parteRoutes.get('/', async (req: Request, res: Response) => {
   try {
     const partes = await Parte.find()
-        .populate('customer') // unificado
+        .populate('customer')
         .populate('ruta')
         .exec();
     res.json({ ok: true, partes });
@@ -68,11 +67,10 @@ parteRoutes.post('/create', verificarToken, async (req: any, res: Response) => {
         const otroParte = { ...data, date: new Date(fechaActual) };
         const otroParteDB = await Parte.create(otroParte);
         partesGuardadas.push(otroParteDB);
-        // duplicar docs si quieres
+        // Si quieres duplicar docs en cada parte, repite la lógica
       }
 
       return res.status(201).json({ ok: true, partes: partesGuardadas });
-
     } else {
       // Caso no periódico
       const parteDB = await Parte.create(data);
@@ -126,39 +124,6 @@ parteRoutes.post('/update', async (req: any, res: Response) => {
 });
 
 /**
- * GET /partes/:id => obtiene 1 parte
- */
-parteRoutes.get('/:id', async (req: Request, res: Response) => {
-  try {
-    const parte = await Parte.findById(req.params.id)
-        .populate('customer')
-        .populate('ruta')
-        .exec();
-    if (!parte) {
-      return res.status(404).json({ ok: false, message: 'Parte no encontrada' });
-    }
-    res.json({ ok: true, parte });
-  } catch (err) {
-    res.status(500).json({ message: 'Error al obtener parte', err });
-  }
-});
-
-/**
- * DELETE /partes/:id => elimina un parte
- */
-parteRoutes.delete('/:id', async (req: Request, res: Response) => {
-  try {
-    const parteDeleted = await Parte.findByIdAndDelete(req.params.id);
-    if (!parteDeleted) {
-      return res.status(404).json({ ok: false, message: 'No encontrado' });
-    }
-    res.json({ ok: true, parte: parteDeleted });
-  } catch (err) {
-    res.status(500).json({ message: 'Error al eliminar parte', err });
-  }
-});
-
-/**
  * GET /partes/noAsignadosEnMes?date=YYYY-MM-DD
  * Muestra partes asignado=false en ese mes
  */
@@ -185,98 +150,84 @@ parteRoutes.get('/noAsignadosEnMes', async (req: Request, res: Response) => {
 });
 
 /**
- * Ejemplos de endpoints ya existentes como noasignado, asignado, etc.
- * Los mantienes, actualizando .populate('customer') => 'Customer'
+ * GET /partes/contrato/:contrato
  */
-
-//subir archivos
-parteRoutes.post('/upload',[verificarToken], async (req:any, res:Response)=>{
-  if(!req.files){
-    return res.status(400).json({
-      ok:false,
-      msg:'No se ha subido ningun archivo!!!'
-    })
-  }
-  const file: FileUpload = req.files.archivo;
-  if(!file){
-    return res.status(400).json({
-      ok:false,
-      file: req.file,
-      msg:'No se ha subido ningun archivo2'
-    });
-  }
-  const carpeta= 'partes';
-  const nombres = await fileSystem.guardarFileTemp(file, carpeta, req.user._id);
-  return res.json({ ok:true, nombres });
-});
-
-
 parteRoutes.get('/contrato/:contrato', async (req: Request, res: Response) => {
-  const contrato = req.params.contrato
-
+  const contrato = req.params.contrato;
   try {
-    const partes: IParte[] = await Parte.find({ customer: contrato }).populate('ruta').populate('zone');
-    res.json({
-      ok: true,
-      partes: partes
-    });
+    const partes: IParte[] = await Parte.find({ customer: contrato })
+        .populate('ruta')
+        .populate({
+          path: 'customer',
+          populate: { path: 'zone' }
+        })
+    res.json({ ok: true, partes });
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los rutas', error });
   }
 });
 
+/**
+ * GET /partes/ruta/:ruta
+ */
 parteRoutes.get('/ruta/:ruta', async (req: Request, res: Response) => {
-  const ruta = req.params.ruta
-
+  const ruta = req.params.ruta;
   try {
-    const partes: IParte[] = await Parte.find({ ruta: ruta }).populate('customer').populate('zone');
-    res.json({
-      ok: true,
-      partes: partes
-    });
+    const partes: IParte[] = await Parte.find({ ruta })
+        .populate({
+          path: 'customer',
+          populate: { path: 'zone' }
+        })
+    res.json({ ok: true, partes });
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los rutas', error });
   }
 });
 
-parteRoutes.get('/noasignados/', async (req: Request, res: Response) => {
-
+/**
+ * GET /partes/noasignados
+ */
+parteRoutes.get('/noasignados', async (req: Request, res: Response) => {
   const fechaInicio = new Date();
   const fechaLimite = new Date();
   fechaLimite.setDate(fechaInicio.getDate() + 30);
   fechaInicio.setDate(fechaInicio.getDate() - 360);
+
   const formattedStartDate = `${fechaInicio.getFullYear()}-${(fechaInicio.getMonth() + 1).toString().padStart(2, '0')}`;
   const formattedEndDate = `${fechaLimite.getFullYear()}-${(fechaLimite.getMonth() + 1).toString().padStart(2, '0')}`;
+
   const asignado = false;
   try {
     const partes: IParte[] = await Parte.find({
-      asignado: asignado,
+      asignado,
       eliminado: false,
-      date:
-      {
+      date: {
         $gte: formattedStartDate,
         $lte: formattedEndDate
       }
-    }).populate('customer').populate('zone');
-    res.json({
-      ok: true,
-      partes: partes,
+    }).populate({
+      path: 'customer',
+      populate: { path: 'zone'  }
+    })
 
-    });
+    res.json({ ok: true, partes });
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los partes', error });
   }
 });
-parteRoutes.get('/noasignado/:fecha', async (req: Request, res: Response) => {
 
-  const fecha = new Date(req.params.fecha)
+/**
+ * GET /partes/noasignado/:fecha
+ */
+parteRoutes.get('/noasignado/:fecha', async (req: Request, res: Response) => {
+  const fecha = new Date(req.params.fecha);
   const fechaInicio = new Date();
-  const noasignado = false;
   fechaInicio.setDate(fecha.getDate() - 365);
+
   const formattedStartDate = `${fechaInicio.getFullYear()}-${(fechaInicio.getMonth() + 1).toString().padStart(2, '0')}`;
   const formattedEndDate = `${fecha.getFullYear()}-${(fecha.getMonth() + 1).toString().padStart(2, '0')}`;
-  console.log(fecha)
-  console.log(formattedEndDate)
+
+  const noasignado = false;
   try {
     const partes: IParte[] = await Parte.find({
       asignado: noasignado,
@@ -284,70 +235,135 @@ parteRoutes.get('/noasignado/:fecha', async (req: Request, res: Response) => {
         $gte: formattedStartDate,
         $lte: formattedEndDate
       }
-    }).populate('customer').populate('zone');
-    res.json({
-      ok: true,
-      partes: partes,
+    }).populate({
+      path: 'customer',
+      populate: { path: 'zone' }
+    })
 
-    });
+    res.json({ ok: true, partes });
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los partes', error });
   }
 });
 
-parteRoutes.get('/asignado/', async (req: Request, res: Response) => {
-
+/**
+ * GET /partes/asignado
+ */
+parteRoutes.get('/asignado', async (req: Request, res: Response) => {
   const fechaInicio = new Date();
   const fechaLimite = new Date();
-  fechaLimite.setDate(fechaInicio.getDate() -1);
+  fechaLimite.setDate(fechaInicio.getDate() - 1);
+
   const formattedStartDate = `${fechaInicio.getFullYear()}-${(fechaInicio.getMonth() + 1).toString().padStart(2, '0')}-${fechaInicio.getDate().toString().padStart(2, '0')}`;
   const formattedEndDate = `${fechaLimite.getFullYear()}-${(fechaLimite.getMonth() + 1).toString().padStart(2, '0')}-${fechaLimite.getDate().toString().padStart(2, '0')}`;
+
   const asignado = true;
   try {
     const partes: IParte[] = await Parte.find({
-      asignado: asignado,
-      date:
-      {
-       // $gte: formattedStartDate,
+      asignado,
+      date: {
+        // $gte: formattedStartDate,
         $lte: formattedEndDate
       }
-    }).populate('customer').populate('zone').populate('ruta');
-    res.json({
-      ok: true,
-      partes: partes,
+    }).populate({
+      path: 'customer',
+      populate: { path: 'zone' }
+    }).populate('ruta')
 
-    });
+    res.json({ ok: true, partes });
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los partes', error });
   }
 });
 
-parteRoutes.get('/nofin/', async (req: Request, res: Response) => {
-
+/**
+ * GET /partes/nofin
+ */
+parteRoutes.get('/nofin', async (req: Request, res: Response) => {
   const fechaInicio = new Date();
   const fechaLimite = new Date();
-  fechaLimite.setDate(fechaInicio.getDate() -1);
+  fechaLimite.setDate(fechaInicio.getDate() - 1);
+
   const formattedStartDate = `${fechaInicio.getFullYear()}-${(fechaInicio.getMonth() + 1).toString().padStart(2, '0')}-${fechaInicio.getDate().toString().padStart(2, '0')}`;
   const formattedEndDate = `${fechaLimite.getFullYear()}-${(fechaLimite.getMonth() + 1).toString().padStart(2, '0')}-${fechaLimite.getDate().toString().padStart(2, '0')}`;
+
   const asignado = true;
   try {
     const partes: IParte[] = await Parte.find({
-      asignado: asignado,
+      asignado,
       state: { $ne: 'Finalizado' },
-      date:
-      {
-       // $gte: formattedStartDate,
+      date: {
+        // $gte: formattedStartDate,
         $lte: formattedEndDate
       }
-    }).populate('customer').populate('zone').populate('ruta');
-    res.json({
-      ok: true,
-      partes: partes,
+    }).populate({
+      path: 'customer',
+      populate: { path: 'zone' }
+    }).populate('ruta')
 
-    });
+    res.json({ ok: true, partes });
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los partes', error });
   }
+});
+
+/**
+ * GET /partes/:id => obtiene 1 parte
+ * (GENÉRICA) - DEBE APARECER DESPUÉS de los endpoints específicos
+ */
+parteRoutes.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const parte = await Parte.findById(req.params.id)
+        .populate({
+          path: 'customer',
+          populate: { path: 'zone' }
+        }).exec();
+    if (!parte) {
+      return res.status(404).json({ ok: false, message: 'Parte no encontrada' });
+    }
+    res.json({ ok: true, parte });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al obtener parte', err });
+  }
+});
+
+/**
+ * DELETE /partes/:id => elimina un parte
+ * (GENÉRICA) - TAMBIÉN DEBE APARECER DESPUÉS de endpoints específicos
+ */
+parteRoutes.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const parteDeleted = await Parte.findByIdAndDelete(req.params.id);
+    if (!parteDeleted) {
+      return res.status(404).json({ ok: false, message: 'No encontrado' });
+    }
+    res.json({ ok: true, parte: parteDeleted });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al eliminar parte', err });
+  }
+});
+
+/**
+ * POST /partes/upload => subir archivos
+ */
+parteRoutes.post('/upload', [verificarToken], async (req: any, res: Response) => {
+  if (!req.files) {
+    return res.status(400).json({
+      ok: false,
+      msg: 'No se ha subido ningun archivo!!!'
+    });
+  }
+  const file: FileUpload = req.files.archivo;
+  if (!file) {
+    return res.status(400).json({
+      ok: false,
+      file: req.file,
+      msg: 'No se ha subido ningun archivo2'
+    });
+  }
+  const carpeta = 'partes';
+  const nombres = await fileSystem.guardarFileTemp(file, carpeta, req.user._id);
+  return res.json({ ok: true, nombres });
 });
 
 export default parteRoutes;
