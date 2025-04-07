@@ -37,8 +37,16 @@ parteRoutes.post('/create', verificarToken, async (req: any, res: Response) => {
     const documentsParte = data.docs;
     delete data.docs;
 
-    // Forzar day=1 en la fecha
+    // Verificar y forzar day=1 en la fecha. No anterior al mes actual
     const fecha = new Date(data.date);
+    const now = new Date();
+    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (fecha < firstOfMonth) {
+      return res.status(400).json({
+        ok: false,
+        message: 'La fecha no puede ser anterior al mes actual'
+      });
+    }
     fecha.setDate(1);
     data.date = fecha;
 
@@ -106,11 +114,24 @@ function getMonthsIncrement(freq?: string): number {
 parteRoutes.post('/update', async (req: any, res: Response) => {
   try {
     const idparte = req.body._id;
-    // Forzar day=1
     if (req.body.date) {
-      const d = new Date(req.body.date);
-      d.setDate(1);
-      req.body.date = d;
+      const fecha = new Date(req.body.date);
+      // Chequeamos que no sea anterior al mes actual
+      const now = new Date();
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      if (fecha < firstOfMonth) {
+        return res.status(400).json({
+          ok: false,
+          message: 'La fecha no puede ser anterior al mes actual'
+        });
+      }
+      fecha.setDate(1);
+      req.body.date = fecha;
+    }
+
+    // Si state=Finalizado => finalizadoTime
+    if (req.body.state === 'Finalizado') {
+      req.body.finalizadoTime = new Date();
     }
 
     const parteDB = await Parte.findByIdAndUpdate(idparte, req.body, { new: true });
@@ -118,6 +139,7 @@ parteRoutes.post('/update', async (req: any, res: Response) => {
       return res.status(404).json({ message: 'Parte no encontrada' });
     }
     res.status(200).json({ ok: true, parte: parteDB });
+
   } catch (err) {
     res.status(500).json({ message: 'Error al actualizar la parte', err });
   }
@@ -307,6 +329,27 @@ parteRoutes.get('/nofin', async (req: Request, res: Response) => {
   }
 });
 
+parteRoutes.get('/finalizadasEnMes', async (req: Request, res: Response) => {
+  try {
+    const dateStr = req.query.date as string;
+    if (!dateStr) {
+      return res.status(400).json({ ok: false, message: 'Falta query param date' });
+    }
+    const fecha = new Date(dateStr);
+    const monthStart = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+    const monthEnd   = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
+
+    const partes = await Parte.find({
+      state: 'Finalizado',
+      date: { $gte: monthStart, $lte: monthEnd }
+    }).exec();
+
+    res.json({ ok: true, partes });
+  } catch (err) {
+    res.status(500).json({ ok: false, err });
+  }
+});
+
 /**
  * GET /partes/:id => obtiene 1 parte
  * (GENÉRICA) - DEBE APARECER DESPUÉS de los endpoints específicos
@@ -365,5 +408,8 @@ parteRoutes.post('/upload', [verificarToken], async (req: any, res: Response) =>
   const nombres = await fileSystem.guardarFileTemp(file, carpeta, req.user._id);
   return res.json({ ok: true, nombres });
 });
+
+
+
 
 export default parteRoutes;

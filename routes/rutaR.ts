@@ -2,6 +2,7 @@ import { Router, Response, Request } from 'express';
 import { IRuta, Ruta } from '../models/rutas.model';
 import { verificarToken } from '../middlewares/autenticacion';
 import {Parte} from "../models/parte.model";
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 const rutaRoutes = Router();
 
@@ -17,15 +18,33 @@ rutaRoutes.get('/prueba',verificarToken, (req: Request, res: Response) => {
 rutaRoutes.post('/create', verificarToken, async (req: Request, res: Response) => {
           const ruta: IRuta = req.body
           console.log(ruta)
-          try {
-              const rutaDB = await Ruta.create(ruta);
-              res.status(201).json({
-                ok: true,
-                ruta: rutaDB
-              });
-            } catch (err) {
-              res.status(500).json({ message: 'Error ', err });
-            }
+    try {
+        const { date, name, state, vehicle, users, comentarios, encargado, herramientas } = req.body;
+
+        // Encargado obligatorio
+        if (!encargado) {
+            return res.status(400).json({
+                ok: false,
+                message: 'Encargado es obligatorio'
+            });
+        }
+
+        const rutaDB = await Ruta.create({
+            date,
+            name,
+            state: state || 'Pendiente',
+            vehicle: vehicle || null,
+            users: users || [],
+            comentarios: comentarios || '',
+            encargado,
+            herramientas: herramientas || []
+        });
+
+        res.status(201).json({ ok: true, ruta: rutaDB });
+
+    } catch (err) {
+        res.status(500).json({ message: 'Error al crear ruta', err });
+    }
 });
 
 
@@ -34,18 +53,66 @@ rutaRoutes.post('/update', verificarToken, async (req: any, res: Response) => {
   const idruta = req.body._id
   const updatedRutaData: IRuta = req.body;
   console.log(updatedRutaData)
-  try {
-    const rutaDB = await Ruta.findByIdAndUpdate(idruta, updatedRutaData, { new: true });
-    if (!rutaDB) {
-      return res.status(404).json({ message: 'Parte no encontrada' });
+    try {
+        const idruta = req.body._id;
+        if (!req.body.encargado) {
+            return res.status(400).json({
+                ok: false,
+                message: 'Encargado es obligatorio'
+            });
+        }
+
+        const updatedRutaData: IRuta = req.body;
+        const rutaDB = await Ruta.findByIdAndUpdate(idruta, updatedRutaData, { new: true });
+        if (!rutaDB) {
+            return res.status(404).json({ message: 'Ruta no encontrada' });
+        }
+        res.status(200).json({ ok: true, ruta: rutaDB });
+
+    } catch (err) {
+        res.status(500).json({ message: 'Error al actualizar la ruta', err });
     }
-    res.status(200).json({
-      ok: true,
-      ruta: rutaDB
-    });
-  } catch (err) {
-    res.status(500).json({ message: 'Error al actualizar la ruta', err });
-  }
+});
+
+rutaRoutes.get('/disponibles', verificarToken, async (req: Request, res: Response) => {
+    try {
+        // 1) Tomar query param date=YYYY-MM-DD, o por defecto la fecha actual
+        const dateStr = req.query.date as string;
+        let baseDate: Date;
+
+        if (dateStr) {
+            baseDate = new Date(dateStr);
+            if (isNaN(baseDate.getTime())) {
+                return res.status(400).json({ ok: false, message: 'date inválido' });
+            }
+        } else {
+            baseDate = new Date(); // hoy
+        }
+        // 2) Calcular inicio y fin de mes con date-fns
+        const start = startOfMonth(baseDate);
+        const end = endOfMonth(baseDate);
+
+        // 3) Buscar rutas en ese rango
+        const rutasDisponibles = await Ruta.find({
+            date: { $gte: start, $lte: end },
+            eliminado: false
+        })
+            .populate('vehicle')
+            .populate('users')
+            .populate('name')
+            .exec();
+
+        // 4) En tu proyecto, “disponibles” podría tener más lógica,
+        //    ej. no asignadas a un vehículo, etc. Ajusta si corresponde.
+
+        res.json({
+            ok: true,
+            rutas: rutasDisponibles
+        });
+    } catch (err) {
+        console.error('Error GET /rutas/disponibles =>', err);
+        res.status(500).json({ ok: false, err });
+    }
 });
 
 

@@ -2,10 +2,8 @@ import { Schema, model, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
 
 const userSchema = new Schema({
-  
   name: {
     type: String,
-    
     required: [true, 'nombre de usuario requerido']
   },
   code: {
@@ -15,41 +13,33 @@ const userSchema = new Schema({
   },
   photo: {
     type: String,
-    quired:[true,''],
     default: "https://ionicframework.com/docs/img/demos/avatar.svg"
   },
-  role:{
+  role: {
     type: String,
     enum:["worker", "admin"],
-    required:[true,''],
-    
+    required:[true,'']
   },
   email: {
     type: String,
-    unique: [true, 'email ya registrado'],
+    unique: true,
     required: [true, 'Ingresa un email válido']
   },
-  phone:{  
+  phone: {
     type: String,
-    unique: [true, 'numero ya registrado'],
+    unique: true,
     required: [true, 'El número es obligatorio']
   },
   password: {
     type: String,
     required: [true, 'Ingresa una contraseña'],
-    select: false 
+    select: false
   },
   activo: {
     type: Boolean,
-    default: true,
-    required: [true, 'Usuario no autorizado']
-  },
-  junior: {
-    type: Boolean,
-    default: true,
-    required: [true, 'el usuario es junior']
-  },
-
+    default: true
+  }
+  // Se quita “junior”
 });
 
 userSchema.methods.compararPassword = function(password: string): boolean {
@@ -57,16 +47,15 @@ userSchema.methods.compararPassword = function(password: string): boolean {
 };
 
 export interface IUser extends Document {
-  name:       string;
-  code:       string;
-  photo:      string;
-  role:       string;
-  email:      string;
-  password:   string;
-  phone:      string;
-  activo:     boolean;
-  junior:     boolean;
-  
+  name: string;
+  code: string;
+  photo: string;
+  role: string;
+  email: string;
+  password: string;
+  phone: string;
+  activo: boolean;
+
   compararPassword(password: string): boolean;
 }
 

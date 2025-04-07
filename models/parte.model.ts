@@ -21,39 +21,27 @@ const parteSchema = new Schema({
     },
     categoria: {
         type: String,
-        enum: ['Extintores', 'Incendio', 'Robo', 'CCTV', 'Pasiva'],
+        enum: ['Extintores', 'Incendio', 'Robo', 'CCTV', 'Pasiva', 'Venta'],
         default: 'Extintores'
     },
     asignado: {
         type: Boolean,
         default: false
     },
-    /**
-     * Forzaremos day=1 al guardarlo (vía la ruta) para simular mes/año.
-     */
     date: {
         type: Date,
         required: [true, 'Fecha es requerida']
     },
-    /**
-     * Apunta al modelo unificado "Customer".
-     */
     customer: {
         type: Schema.Types.ObjectId,
         ref: 'Customer',
         required: [true, 'El cliente es requerido']
     },
-    /**
-     * Ruta (opcional).
-     */
     ruta: {
         type: Schema.Types.ObjectId,
         ref: 'Ruta',
         default: null
     },
-    /**
-     * Campos para partes periódicos:
-     */
     periodico: {
         type: Boolean,
         default: false
@@ -64,6 +52,20 @@ const parteSchema = new Schema({
     },
     endDate: {
         type: Date
+    },
+    // NUEVOS CAMPOS
+    coordinationMethod: {
+        type: String,
+        enum: ['Llamar antes', 'Coordinar por email', 'Coordinar según horarios'],
+        default: 'Coordinar según horarios'
+    },
+    gestiona: {
+        type: Number,
+        default: 0
+    },
+    finalizadoTime: {
+        type: Date,
+        default: null
     },
     createdDate: {
         type: Date
@@ -83,12 +85,15 @@ export interface IParte extends Document {
     type: string;
     categoria: string;
     asignado: boolean;
-    date: Date;       // day=1 for month-year
-    customer: string; // Apunta a Customer
+    date: Date;
+    customer: string;
     ruta?: string;
     periodico: boolean;
     frequency?: string;
     endDate?: Date;
+    coordinationMethod: string;
+    gestiona: number;
+    finalizadoTime?: Date;
     createdDate?: Date;
 }
 

@@ -14,23 +14,35 @@ customerRoutes.get('/prueba', (req: Request, res: Response) => {
 });
 
 customerRoutes.post('/create', verificarToken, async (req: Request, res: Response) => {
-        const customer: ICustomer = req.body
-        try {
-            const customerDB = await Customer.create(customer);
-            res.status(201).json({
-              ok: true,
-              customer: customerDB
-            });
-          } catch (err) {
-            res.status(500).json({ message: 'Error al admin', err });
-          }
-        
+    try {
+        const data: ICustomer = req.body;
+        // data.MI? data.tipo? (se guardan tal cual)
+
+        const customerDB = await Customer.create(data);
+        res.status(201).json({
+            ok: true,
+            customer: customerDB
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error al crear customer', err });
+    }
+
     
 });
 
 
 //actializar
 customerRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
+    try {
+        const { _id } = req.body;
+        const updated = await Customer.findByIdAndUpdate(_id, req.body, { new: true });
+        if (!updated) {
+            return res.status(404).json({ ok: false, message: 'Cliente no encontrado' });
+        }
+        res.json({ ok: true, customer: updated });
+    } catch (err) {
+        res.status(500).json({ message: 'Error al actualizar', err });
+    }
 });
 
 // Ruta para eliminar un scustomer por su ID

@@ -98,6 +98,15 @@ const customerSchema = new Schema({
         type: String,
         enum: ['T', 'S', 'A']
     },
+    // NUEVOS CAMPOS
+    MI: {
+        type: Number,
+        default: 0
+    },
+    tipo: {
+        type: String,
+        default: 'Normal' // o 'Especial' etc.
+    },
     total: Number,
     documents: [{
         name: {
@@ -132,7 +141,8 @@ export interface ICustomer extends Document {
     gestiona?: string;
     photo: string;
     createdAt: Date;
-
+    MI?: number;
+    tipo?: string;
     // "Contract" data
     startDate?: Date;
     endDate?: Date;
