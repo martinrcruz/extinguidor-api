@@ -1,46 +1,74 @@
 import { Schema, model, Document } from 'mongoose';
 
 const parteSchema = new Schema({
+    title: {
+        type: String,
+        required: [true, 'El título es obligatorio'],
+        trim: true,
+        maxlength: [200, 'El título no puede exceder los 200 caracteres']
+    },
     description: {
         type: String,
-        required: [true, 'Descripción es requerida']
-    },
-    facturacion: {
-        type: Number,
-        default: 0
-    },
-    state: {
-        type: String,
-        enum: ['Pendiente', 'EnProceso', 'Finalizado'],
-        default: 'Pendiente'
-    },
-    type: {
-        type: String,
-        enum: ['Obra', 'Mantenimiento', 'Correctivo', 'Visitas'],
-        default: 'Mantenimiento'
-    },
-    categoria: {
-        type: String,
-        enum: ['Extintores', 'Incendio', 'Robo', 'CCTV', 'Pasiva', 'Venta'],
-        default: 'Extintores'
-    },
-    asignado: {
-        type: Boolean,
-        default: false
+        required: [true, 'La descripción es obligatoria'],
+        trim: true
     },
     date: {
         type: Date,
-        required: [true, 'Fecha es requerida']
+        required: [true, 'La fecha es obligatoria'],
+        index: true
+    },
+    state: {
+        type: String,
+        enum: {
+            values: ['Pendiente', 'EnProceso', 'Finalizado'],
+            message: '{VALUE} no es un estado válido'
+        },
+        default: 'Pendiente',
+        index: true
+    },
+    type: {
+        type: String,
+        enum: {
+            values: ['Obra', 'Mantenimiento', 'Correctivo', 'Visitas'],
+            message: '{VALUE} no es un tipo válido'
+        },
+        default: 'Mantenimiento',
+        index: true
+    },
+    categoria: {
+        type: String,
+        enum: {
+            values: ['Extintores', 'Incendio', 'Robo', 'CCTV', 'Pasiva', 'Venta'],
+            message: '{VALUE} no es una categoría válida'
+        },
+        default: 'Extintores',
+        index: true
+    },
+    asignado: {
+        type: Boolean,
+        default: false,
+        index: true
+    },
+    eliminado: {
+        type: Boolean,
+        default: false,
+        index: true
     },
     customer: {
         type: Schema.Types.ObjectId,
         ref: 'Customer',
-        required: [true, 'El cliente es requerido']
+        required: [true, 'El cliente es obligatorio'],
+        index: true
     },
     ruta: {
         type: Schema.Types.ObjectId,
         ref: 'Ruta',
-        default: null
+        index: true
+    },
+    address: {
+        type: String,
+        required: [true, 'La dirección es obligatoria'],
+        trim: true
     },
     periodico: {
         type: Boolean,
@@ -48,53 +76,124 @@ const parteSchema = new Schema({
     },
     frequency: {
         type: String,
-        enum: ['Mensual', 'Trimestral', 'Semestral', 'Anual']
+        enum: {
+            values: ['Mensual', 'Trimestral', 'Semestral', 'Anual'],
+            message: '{VALUE} no es una frecuencia válida'
+        }
     },
     endDate: {
-        type: Date
+        type: Date,
+        validate: {
+            validator: function(this: any, value: Date) {
+                return !this.periodico || (this.periodico && value);
+            },
+            message: 'La fecha de finalización es obligatoria para partes periódicos'
+        }
     },
-    // NUEVOS CAMPOS
     coordinationMethod: {
         type: String,
-        enum: ['Llamar antes', 'Coordinar por email', 'Coordinar según horarios'],
+        enum: {
+            values: ['Llamar antes', 'Coordinar por email', 'Coordinar según horarios'],
+            message: '{VALUE} no es un método de coordinación válido'
+        },
         default: 'Coordinar según horarios'
     },
     gestiona: {
         type: Number,
-        default: 0
+        default: 0,
+        min: [0, 'El valor de gestión no puede ser negativo'],
+        max: [100, 'El valor de gestión no puede exceder 100']
     },
     finalizadoTime: {
-        type: Date,
-        default: null
-    },
-    createdDate: {
         type: Date
+    },
+    comentarios: [{
+        texto: {
+            type: String,
+            required: [true, 'El texto del comentario es obligatorio'],
+            trim: true
+        },
+        fecha: {
+            type: Date,
+            default: Date.now
+        },
+        usuario: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: [true, 'El usuario es obligatorio']
+        }
+    }],
+    documentos: [{
+        nombre: {
+            type: String,
+            required: [true, 'El nombre del documento es obligatorio'],
+            trim: true
+        },
+        url: {
+            type: String,
+            required: [true, 'La URL del documento es obligatoria']
+        },
+        tipo: {
+            type: String,
+            required: [true, 'El tipo de documento es obligatorio']
+        },
+        fecha: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    createdDate: {
+        type: Date,
+        default: Date.now
     }
 });
 
-parteSchema.pre('save', function() {
-    if (!this.createdDate) {
-        this.createdDate = new Date();
+// Índices compuestos para búsquedas frecuentes
+parteSchema.index({ customer: 1, date: 1 });
+parteSchema.index({ ruta: 1, date: 1 });
+parteSchema.index({ state: 1, date: 1 });
+
+// Middleware para validar fechas
+parteSchema.pre('save', function(next) {
+    if (this.periodico && !this.endDate) {
+        next(new Error('La fecha de finalización es obligatoria para partes periódicos'));
     }
+    if (this.state === 'Finalizado' && !this.finalizadoTime) {
+        this.finalizadoTime = new Date();
+    }
+    next();
 });
 
 export interface IParte extends Document {
+    title: string;
     description: string;
-    facturacion: number;
-    state: string;
-    type: string;
-    categoria: string;
-    asignado: boolean;
     date: Date;
+    state: 'Pendiente' | 'EnProceso' | 'Finalizado';
+    type: 'Obra' | 'Mantenimiento' | 'Correctivo' | 'Visitas';
+    categoria: 'Extintores' | 'Incendio' | 'Robo' | 'CCTV' | 'Pasiva' | 'Venta';
+    asignado: boolean;
+    eliminado: boolean;
     customer: string;
     ruta?: string;
+    address: string;
     periodico: boolean;
-    frequency?: string;
+    frequency?: 'Mensual' | 'Trimestral' | 'Semestral' | 'Anual';
     endDate?: Date;
-    coordinationMethod: string;
+    coordinationMethod: 'Llamar antes' | 'Coordinar por email' | 'Coordinar según horarios';
     gestiona: number;
     finalizadoTime?: Date;
-    createdDate?: Date;
+    comentarios: Array<{
+        texto: string;
+        fecha: Date;
+        usuario: string;
+    }>;
+    documentos: Array<{
+        nombre: string;
+        url: string;
+        tipo: string;
+        fecha: Date;
+    }>;
+    createdDate: Date;
 }
 
 export const Parte = model<IParte>('Parte', parteSchema);

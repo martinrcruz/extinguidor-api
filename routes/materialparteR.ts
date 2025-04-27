@@ -6,26 +6,27 @@ const materialParteRouter = Router();
 
 
 materialParteRouter.get('/prueba', (req: Request, res: Response) => {
-
     res.json({
         ok: true,
-        mje: 'todo ok'
+        data: { message: 'todo ok' }
     })
 });
 
 materialParteRouter.post('/create', verificarToken, async (req: Request, res: Response) => {
-        const materialParte: IMaterialParte = req.body
-        try {
-            const materialParteDB = await MaterialParte.create(materialParte);
-            res.status(201).json({
-              ok: true,
-              materialParte: materialParteDB
-            });
-          } catch (err) {
-            res.status(500).json({ message: 'Error al admin', err });
-          }
-        
-    
+    const materialParte: IMaterialParte = req.body
+    try {
+        const materialParteDB = await MaterialParte.create(materialParte);
+        res.status(201).json({
+            ok: true,
+            data: { materialParte: materialParteDB }
+        });
+    } catch (err: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al crear material de parte',
+            message: err.message
+        });
+    }
 });
 
 
@@ -39,29 +40,37 @@ materialParteRouter.delete('/:id', async (req: Request, res: Response) => {
 });
 
 materialParteRouter.get('/', async (req: Request, res: Response) => {
-  try {
-      const materialPartes: IMaterialParte[] = await MaterialParte.find().populate('material');
-      res.json({
-          ok: true,
-          materialPartes: materialPartes
-      });
-  } catch (error) {
-      res.status(500).json({ message: 'Error al obtener los Zipcodes', error });
-  }
+    try {
+        const materialPartes: IMaterialParte[] = await MaterialParte.find().populate('material');
+        res.json({
+            ok: true,
+            data: { materialPartes }
+        });
+    } catch (error: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al obtener materiales de parte',
+            message: error.message
+        });
+    }
 });
 
-//obtener materialParte
+//obtener materialParte por ruta
 materialParteRouter.get('/:ruta', async (req: Request, res: Response) => {
-  const ruta =  req.params.ruta
-  try {
-      const materialPartes: IMaterialParte[] = await MaterialParte.find({ ruta: ruta }).populate('material');;
-      res.json({
-          ok: true,
-          materialPartes: materialPartes
-      });
-  } catch (error) {
-      res.status(500).json({ message: 'Error al obtener materialPartes', error });
-  }
+    const ruta = req.params.ruta
+    try {
+        const materialPartes: IMaterialParte[] = await MaterialParte.find({ ruta: ruta }).populate('material');
+        res.json({
+            ok: true,
+            data: { materialPartes }
+        });
+    } catch (error: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al obtener materiales de parte',
+            message: error.message
+        });
+    }
 });
 
 

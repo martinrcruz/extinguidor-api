@@ -6,26 +6,27 @@ const vehicleRoutes = Router();
 
 
 vehicleRoutes.get('/prueba', (req: Request, res: Response) => {
-
     res.json({
         ok: true,
-        mje: 'todo ok'
+        data: { message: 'todo ok' }
     })
 });
 
 vehicleRoutes.post('/create', verificarToken, async (req: Request, res: Response) => {
-        const vehicle: IVehicle = req.body
-        try {
-            const vehicleDB = await Vehicle.create(vehicle);
-            res.status(201).json({
-              ok: true,
-              vehicle: vehicleDB
-            });
-          } catch (err) {
-            res.status(500).json({ message: 'Error al admin', err });
-          }
-        
-    
+    const vehicle: IVehicle = req.body
+    try {
+        const vehicleDB = await Vehicle.create(vehicle);
+        res.status(201).json({
+            ok: true,
+            data: { vehicle: vehicleDB }
+        });
+    } catch (err: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al crear vehículo',
+            message: err.message
+        });
+    }
 });
 
 
@@ -45,10 +46,14 @@ vehicleRoutes.get('/', async (req: Request, res: Response) => {
         const vehicles: IVehicle[] = await Vehicle.find();
         res.json({
             ok: true,
-            vehicles: vehicles
+            data: { vehicles }
         });
-    } catch (error) {
-        res.status(500).json({ message: 'Error al obtener los vehicles', error });
+    } catch (error: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al obtener vehículos',
+            message: error.message
+        });
     }
 });
 
@@ -61,13 +66,21 @@ vehicleRoutes.get('/:id', async (req: Request, res: Response) => {
         if (vehicle) {
             res.json({
                 ok: true,
-                vehicle: vehicle
+                data: { vehicle }
             });
         } else {
-            res.status(404).json({ message: 'Evento no encontrado' });
+            res.status(404).json({ 
+                ok: false,
+                error: 'Vehículo no encontrado',
+                message: 'Vehículo no encontrado'
+            });
         }
-    } catch (error) {
-        res.status(500).json({ message: 'Error al obtener el evento', error });
+    } catch (error: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al obtener vehículo',
+            message: error.message
+        });
     }
 });
 

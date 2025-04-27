@@ -8,9 +8,16 @@ const contractRouter = express.Router();
 contractRouter.get('/', async (req: Request, res: Response) => {
     try {
         const contracts = await Contract.find();
-        res.json(contracts);
-    } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.json({
+            ok: true,
+            data: { contracts }
+        });
+    } catch (error: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al obtener contratos',
+            message: error.message
+        });
     }
 });
 
@@ -19,12 +26,23 @@ contractRouter.get('/:id', async (req: Request, res: Response) => {
     try {
         const contract = await Contract.findById(req.params.id);
         if (contract) {
-            res.json(contract);
+            res.json({
+                ok: true,
+                data: { contract }
+            });
         } else {
-            res.status(404).json({ error: 'Contract not found' });
+            res.status(404).json({ 
+                ok: false,
+                error: 'Contrato no encontrado',
+                message: 'Contrato no encontrado'
+            });
         }
-    } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
+    } catch (error: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al obtener contrato',
+            message: error.message
+        });
     }
 });
 
@@ -33,9 +51,16 @@ contractRouter.post('/', async (req: Request, res: Response) => {
     try {
         const newContract = new Contract(req.body);
         const savedContract = await newContract.save();
-        res.status(201).json(savedContract);
-    } catch (error) {
-        res.status(400).json({ error: 'Bad Request' });
+        res.status(201).json({
+            ok: true,
+            data: { contract: savedContract }
+        });
+    } catch (error: any) {
+        res.status(400).json({ 
+            ok: false,
+            error: 'Error al crear contrato',
+            message: error.message
+        });
     }
 });
 
@@ -48,12 +73,23 @@ contractRouter.put('/:id', async (req: Request, res: Response) => {
             { new: true }
         );
         if (updatedContract) {
-            res.json(updatedContract);
+            res.json({
+                ok: true,
+                data: { contract: updatedContract }
+            });
         } else {
-            res.status(404).json({ error: 'Contract not found' });
+            res.status(404).json({ 
+                ok: false,
+                error: 'Contrato no encontrado',
+                message: 'Contrato no encontrado'
+            });
         }
-    } catch (error) {
-        res.status(400).json({ error: 'Bad Request' });
+    } catch (error: any) {
+        res.status(400).json({ 
+            ok: false,
+            error: 'Error al actualizar contrato',
+            message: error.message
+        });
     }
 });
 
@@ -62,12 +98,23 @@ contractRouter.delete('/:id', async (req: Request, res: Response) => {
     try {
         const deletedContract = await Contract.findByIdAndDelete(req.params.id);
         if (deletedContract) {
-            res.json(deletedContract);
+            res.json({
+                ok: true,
+                data: { contract: deletedContract }
+            });
         } else {
-            res.status(404).json({ error: 'Contract not found' });
+            res.status(404).json({ 
+                ok: false,
+                error: 'Contrato no encontrado',
+                message: 'Contrato no encontrado'
+            });
         }
-    } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
+    } catch (error: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al eliminar contrato',
+            message: error.message
+        });
     }
 });
 

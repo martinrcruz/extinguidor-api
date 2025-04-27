@@ -16,7 +16,8 @@ export const verificarToken = ( req: any, res: Response, next: NextFunction ) =>
          }).catch ( err => {
              res.json({
                  ok: false,
-                 mensaje: 'token no es correcto'
+                 error: 'Token no válido',
+                 message: 'Token no es correcto'
              });
          });
 }

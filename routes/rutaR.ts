@@ -74,6 +74,39 @@ rutaRoutes.post('/update', verificarToken, async (req: any, res: Response) => {
     }
 });
 
+/**
+ * GET /rutas/worker/:workerId
+ * Obtiene las rutas asignadas a un trabajador específico
+ */
+rutaRoutes.get('/worker/:workerId', verificarToken, async (req: Request, res: Response) => {
+  try {
+    const { workerId } = req.params;
+    const dateStr = req.query.date as string;
+    let query: any = { users: workerId };
+
+    if (dateStr) {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        return res.status(400).json({ ok: false, error: 'Fecha inválida' });
+      }
+      const start = startOfMonth(date);
+      const end = endOfMonth(date);
+      query.date = { $gte: start, $lte: end };
+    }
+
+    const rutas = await Ruta.find(query)
+      .populate('vehicle')
+      .populate('users')
+      .populate('name')
+      .exec();
+
+    res.json({ ok: true, rutas });
+  } catch (error: any) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+
 rutaRoutes.get('/disponibles', verificarToken, async (req: Request, res: Response) => {
     try {
         // 1) Tomar query param date=YYYY-MM-DD, o por defecto la fecha actual
@@ -102,7 +135,7 @@ rutaRoutes.get('/disponibles', verificarToken, async (req: Request, res: Respons
             .populate('name')
             .exec();
 
-        // 4) En tu proyecto, “disponibles” podría tener más lógica,
+        // 4) En tu proyecto, "disponibles" podría tener más lógica,
         //    ej. no asignadas a un vehículo, etc. Ajusta si corresponde.
 
         res.json({

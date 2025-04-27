@@ -6,24 +6,33 @@ import uniqid from 'uniqid';
 export default class FileSystem{
     constructor(){};
 
-    guardarFileTemp(file: FileUpload, carpeta: string, usuario:string){
-
+    guardarFileTemp(file: FileUpload, carpeta: string, usuario:string): Promise<string>{
         return new Promise( (resolve,reject)=>{
             const path =  this.crearCarpetaParte(carpeta, usuario)
-            const nombres = this.generarNombre(file.name)
-          
+            const nombreArchivo = this.generarNombre(file.name)
+            const rutaCompleta = `${path}/${nombreArchivo.url}`
 
-        const nombreArchivo= file.mv(`${path}/${nombres.url}`, (err:any) =>{
-            
-            if(err){
-                reject(err);
-            }else{
-                resolve(nombres);
-            }
+            file.mv(rutaCompleta, (err:any) =>{
+                if(err){
+                    reject(err);
+                }else{
+                    resolve(nombreArchivo.url);
+                }
+            })
         })
+    }
 
-        })
-        
+    eliminarFileTemp(nombreArchivo: string, carpeta: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const path = this.obtenerPathArchivo(nombreArchivo, carpeta);
+            fs.unlink(path, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
     }
 
     private generarNombre(nombreO:string){
@@ -89,5 +98,7 @@ export default class FileSystem{
         return fs.readdirSync( pathParteTemp)|| [];
     }
 
-
+    private obtenerPathArchivo(nombreArchivo: string, carpeta: string): string {
+        return path.resolve(__dirname, `../uploads/${carpeta}/${nombreArchivo}`);
+    }
 }

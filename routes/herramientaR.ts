@@ -13,10 +13,14 @@ herramientaRoutes.get('/', async (req: Request, res: Response) => {
         const herramientas = await Herramienta.find();
         res.json({
             ok: true,
-            herramientas
+            data: { herramientas }
         });
-    } catch (error) {
-        res.status(500).json({ ok: false, message: 'Error al obtener las herramientas', error });
+    } catch (error: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al obtener herramientas',
+            message: error.message
+        });
     }
 });
 
@@ -29,11 +33,22 @@ herramientaRoutes.get('/:id', async (req: Request, res: Response) => {
     try {
         const herramienta = await Herramienta.findById(id);
         if (!herramienta) {
-            return res.status(404).json({ ok: false, message: 'Herramienta no encontrada' });
+            return res.status(404).json({ 
+                ok: false,
+                error: 'Herramienta no encontrada',
+                message: 'Herramienta no encontrada'
+            });
         }
-        res.json({ ok: true, herramienta });
-    } catch (error) {
-        res.status(500).json({ ok: false, message: 'Error al obtener la herramienta', error });
+        res.json({ 
+            ok: true,
+            data: { herramienta }
+        });
+    } catch (error: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al obtener herramienta',
+            message: error.message
+        });
     }
 });
 
@@ -49,29 +64,46 @@ herramientaRoutes.post('/create', verificarToken, async (req: Request, res: Resp
 
     // Validar campos requeridos
     if (!body.name) {
-        return res.status(400).json({ ok: false, message: 'El nombre es obligatorio' });
+        return res.status(400).json({ 
+            ok: false,
+            error: 'Campo requerido',
+            message: 'El nombre es obligatorio'
+        });
     }
     if (!body.description) {
-        return res.status(400).json({ ok: false, message: 'La descripción es obligatoria' });
+        return res.status(400).json({ 
+            ok: false,
+            error: 'Campo requerido',
+            message: 'La descripción es obligatoria'
+        });
     }
 
     try {
         const herramienta = new Herramienta({
             name: body.name,
             description: body.description,
-            // Agrega aquí otros campos si son necesarios
         });
         const herramientaDB = await herramienta.save();
         res.status(201).json({
             ok: true,
-            herramienta: herramientaDB,
-            message: 'Herramienta creada exitosamente'
+            data: { 
+                herramienta: herramientaDB,
+                message: 'Herramienta creada exitosamente'
+            }
         });
     } catch (error: any) {
         if (error.code === 11000) {
-            return res.status(400).json({ ok: false, message: 'El nombre de la herramienta ya existe' });
+            return res.status(400).json({ 
+                ok: false,
+                error: 'Nombre duplicado',
+                message: 'El nombre de la herramienta ya existe'
+            });
         }
-        res.status(500).json({ ok: false, message: 'Error al crear la herramienta', error });
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al crear herramienta',
+            message: error.message
+        });
     }
 });
 
@@ -87,25 +119,38 @@ herramientaRoutes.put('/update/:id', verificarToken, async (req: Request, res: R
     const body = req.body;
 
     try {
-        // Si se intenta actualizar el nombre, verificar que no exista otra herramienta con ese nombre.
         if (body.name) {
             const duplicate = await Herramienta.findOne({ name: body.name, _id: { $ne: id } });
             if (duplicate) {
-                return res.status(400).json({ ok: false, message: 'El nombre de la herramienta ya está en uso' });
+                return res.status(400).json({ 
+                    ok: false,
+                    error: 'Nombre duplicado',
+                    message: 'El nombre de la herramienta ya está en uso'
+                });
             }
         }
 
         const herramientaUpdated = await Herramienta.findByIdAndUpdate(id, body, { new: true });
         if (!herramientaUpdated) {
-            return res.status(404).json({ ok: false, message: 'Herramienta no encontrada' });
+            return res.status(404).json({ 
+                ok: false,
+                error: 'Herramienta no encontrada',
+                message: 'Herramienta no encontrada'
+            });
         }
         res.json({
             ok: true,
-            herramienta: herramientaUpdated,
-            message: 'Herramienta actualizada correctamente'
+            data: { 
+                herramienta: herramientaUpdated,
+                message: 'Herramienta actualizada correctamente'
+            }
         });
-    } catch (error) {
-        res.status(500).json({ ok: false, message: 'Error al actualizar la herramienta', error });
+    } catch (error: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al actualizar herramienta',
+            message: error.message
+        });
     }
 });
 
@@ -118,15 +163,25 @@ herramientaRoutes.delete('/:id', verificarToken, async (req: Request, res: Respo
     try {
         const herramientaDeleted = await Herramienta.findByIdAndDelete(id);
         if (!herramientaDeleted) {
-            return res.status(404).json({ ok: false, message: 'Herramienta no encontrada' });
+            return res.status(404).json({ 
+                ok: false,
+                error: 'Herramienta no encontrada',
+                message: 'Herramienta no encontrada'
+            });
         }
         res.json({
             ok: true,
-            herramienta: herramientaDeleted,
-            message: 'Herramienta eliminada correctamente'
+            data: { 
+                herramienta: herramientaDeleted,
+                message: 'Herramienta eliminada correctamente'
+            }
         });
-    } catch (error) {
-        res.status(500).json({ ok: false, message: 'Error al eliminar la herramienta', error });
+    } catch (error: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al eliminar herramienta',
+            message: error.message
+        });
     }
 });
 

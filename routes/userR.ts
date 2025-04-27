@@ -8,39 +8,39 @@ const userRoutes = Router();
 
 
 userRoutes.get('/prueba', (req: Request, res: Response) => {
-
     res.json({
         ok: true,
-        mje: 'todo ok'
+        data: { message: 'todo ok' }
     })
 });
 
 userRoutes.post('/create', async (req: Request, res: Response) => {
-        const user: IUser = req.body
-        user.password = await bcrypt.hashSync(req.body.password, 10);
-        try {
-            const userDB = await User.create(user);
-            res.status(201).json({
-              ok: true,
-              mje: 'user creado'
-            });
-          } catch (err) {
-            res.status(500).json({ message: 'Error al admin', err });
-          }
-        
-    
+    const user: IUser = req.body
+    user.password = await bcrypt.hashSync(req.body.password, 10);
+    try {
+        const userDB = await User.create(user);
+        res.status(201).json({
+            ok: true,
+            data: { message: 'Usuario creado exitosamente' }
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al crear usuario',
+            message: err.message
+        });
+    }
 });
 //login
 userRoutes.post('/login', (req: Request, res: Response) => {
-
     const body = req.body;
     console.log(req.body)
     User.findOne({ email: body.email }).select('+password').then(userDB => {
-
         if (!userDB) {
             return res.status(500).json({
                 ok: false,
-                message: 'usuario no encontrado'
+                error: 'Usuario no encontrado',
+                message: 'Usuario no encontrado'
             });
         }
 
@@ -51,27 +51,29 @@ userRoutes.post('/login', (req: Request, res: Response) => {
                 code: userDB.code,
                 email: userDB.email,
                 phone: userDB.phone,
-                role: userDB.role,
-                junior: userDB.junior
+                role: userDB.role
             })
             res.status(201).json({
                 ok: true,
-                tokenU: tokenUser,
-                role: userDB.role
+                data: {
+                    token: tokenUser,
+                    role: userDB.role
+                }
             });
         } else {
             res.status(500).json({
                 ok: false,
-                message: 'password no coincide'
+                error: 'Contraseña incorrecta',
+                message: 'Password no coincide'
             });
         }
-
-
     }).catch(err => {
-        res.status(500).json({ message: 'Error', err });
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error en el servidor',
+            message: err.message
+        });
     })
-
-
 })
 
 
@@ -112,8 +114,7 @@ userRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
                 code:   userActualizado.code,
                 email:  userActualizado.email,
                 phone:  userActualizado.phone,
-                role:   userActualizado.role,
-                junior: userActualizado.junior
+                role:   userActualizado.role
             });
             res.status(201).json({
                 ok: true,
