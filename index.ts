@@ -74,7 +74,7 @@ server.app.use(fileUpload({
 const isProduction = process.env.NODE_ENV === 'production';
 const corsOptions = {
   origin: isProduction 
-    ? ['https://extinguidor-frontend.vercel.app', 'https://extinguidor-frontend.netlify.app', 'https://extinguidor.app', 'https://www.extinguidor.app', 'https://app.extinguidor.com']
+    ? ['https://extinguidor-frontend.vercel.app', 'https://extinguidor-frontend.netlify.app', 'https://extinguidor.app', 'https://www.extinguidor.app', 'https://app.extinguidor.com', 'https://elextinguidorapp.es', 'https://www.elextinguidorapp.es']
     : true, // Permitir cualquier origen en desarrollo
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
