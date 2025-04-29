@@ -32,11 +32,63 @@ materialRouter.post('/create', verificarToken, async (req: Request, res: Respons
 
 //actializar
 materialRouter.put('/update', verificarToken, async (req: any, res: Response) => {
+    try {
+        const { _id } = req.body;
+        if (!_id) {
+            return res.status(400).json({ 
+                ok: false,
+                error: 'ID no proporcionado',
+                message: 'Se requiere el ID del material'
+            });
+        }
+        
+        const updated = await Material.findByIdAndUpdate(_id, req.body, { new: true });
+        if (!updated) {
+            return res.status(404).json({ 
+                ok: false,
+                error: 'Material no encontrado',
+                message: 'Material no encontrado'
+            });
+        }
+        
+        res.json({ 
+            ok: true, 
+            data: { material: updated }
+        });
+    } catch (err: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al actualizar material',
+            message: err.message
+        });
+    }
 });
 
 // Ruta para eliminar un Material por su ID
-materialRouter.delete('/:id', async (req: Request, res: Response) => {
- 
+materialRouter.delete('/:id', verificarToken, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const deleted = await Material.findByIdAndDelete(id);
+        
+        if (!deleted) {
+            return res.status(404).json({ 
+                ok: false,
+                error: 'Material no encontrado',
+                message: 'Material no encontrado'
+            });
+        }
+        
+        res.json({ 
+            ok: true, 
+            data: { message: 'Material eliminado correctamente' }
+        });
+    } catch (err: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al eliminar material',
+            message: err.message
+        });
+    }
 });
 
 materialRouter.get('/', async (req: Request, res: Response) => {

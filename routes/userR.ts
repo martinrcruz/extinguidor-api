@@ -27,7 +27,7 @@ userRoutes.post('/create', async (req: Request, res: Response) => {
         res.status(500).json({ 
             ok: false,
             error: 'Error al crear usuario',
-            message: err.message
+            message: err instanceof Error ? err.message : 'Error desconocido'
         });
     }
 });

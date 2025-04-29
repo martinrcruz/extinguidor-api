@@ -56,8 +56,30 @@ customerRoutes.put('/update', verificarToken, async (req: any, res: Response) =>
 });
 
 // Ruta para eliminar un scustomer por su ID
-customerRoutes.delete('/:id', async (req: Request, res: Response) => {
- 
+customerRoutes.delete('/:id', verificarToken, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const deleted = await Customer.findByIdAndDelete(id);
+        
+        if (!deleted) {
+            return res.status(404).json({ 
+                ok: false,
+                error: 'Cliente no encontrado',
+                message: 'Cliente no encontrado'
+            });
+        }
+        
+        res.json({ 
+            ok: true, 
+            data: { message: 'Cliente eliminado correctamente' }
+        });
+    } catch (err: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al eliminar cliente',
+            message: err.message
+        });
+    }
 });
 
 customerRoutes.get('/', async (req: Request, res: Response) => {

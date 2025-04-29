@@ -32,11 +32,63 @@ vehicleRoutes.post('/create', verificarToken, async (req: Request, res: Response
 
 //actializar
 vehicleRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
+    try {
+        const { _id } = req.body;
+        if (!_id) {
+            return res.status(400).json({ 
+                ok: false,
+                error: 'ID no proporcionado',
+                message: 'Se requiere el ID del vehículo'
+            });
+        }
+        
+        const updated = await Vehicle.findByIdAndUpdate(_id, req.body, { new: true });
+        if (!updated) {
+            return res.status(404).json({ 
+                ok: false,
+                error: 'Vehículo no encontrado',
+                message: 'Vehículo no encontrado'
+            });
+        }
+        
+        res.json({ 
+            ok: true, 
+            data: { vehicle: updated }
+        });
+    } catch (err: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al actualizar vehículo',
+            message: err.message
+        });
+    }
 });
 
 // Ruta para eliminar un vehicle por su ID
-vehicleRoutes.delete('/:id', async (req: Request, res: Response) => {
- 
+vehicleRoutes.delete('/:id', verificarToken, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const deleted = await Vehicle.findByIdAndDelete(id);
+        
+        if (!deleted) {
+            return res.status(404).json({ 
+                ok: false,
+                error: 'Vehículo no encontrado',
+                message: 'Vehículo no encontrado'
+            });
+        }
+        
+        res.json({ 
+            ok: true, 
+            data: { message: 'Vehículo eliminado correctamente' }
+        });
+    } catch (err: any) {
+        res.status(500).json({ 
+            ok: false,
+            error: 'Error al eliminar vehículo',
+            message: err.message
+        });
+    }
 });
 
 
