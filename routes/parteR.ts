@@ -227,7 +227,7 @@ parteRoutes.post('/update', [verificarToken, verificarPropietarioParte], async (
 
 /**
  * GET /partes/noAsignadosEnMes?date=YYYY-MM-DD
- * Muestra partes asignado=false en ese mes
+ * Muestra partes no asignados hasta el fin del mes especificado
  */
 parteRoutes.get('/noAsignadosEnMes', async (req: Request, res: Response) => {
   try {
@@ -236,18 +236,25 @@ parteRoutes.get('/noAsignadosEnMes', async (req: Request, res: Response) => {
       return res.status(400).json({ ok: false, message: 'Falta query param date' });
     }
     const fecha = new Date(dateStr);
-    const start = startOfMonth(fecha);
     const end = endOfMonth(fecha);
 
     const partes = await Parte.find({
       asignado: false,
-      date: { $gte: start, $lte: end }
-    }).populate('customer').populate('ruta').exec();
+      date: { $lte: end }  // Traer todos los partes no asignados hasta el fin del mes especificado
+    })
+    .populate('customer')
+    .populate('ruta')
+    .sort({ date: 1 })  // Ordenar por fecha ascendente
+    .exec();
 
     res.json({ ok: true, partes });
   } catch (err) {
     console.error('Error GET /partes/noAsignadosEnMes', err);
-    res.status(500).json({ ok: false, err });
+    res.status(500).json({ 
+      ok: false, 
+      error: 'Error al obtener partes no asignados',
+      message: err instanceof Error ? err.message : 'Error desconocido'
+    });
   }
 });
 
@@ -693,7 +700,7 @@ parteRoutes.put('/:id/status', verificarToken, async (req: any, res: Response) =
 
 /**
  * GET /calendario/:date/partes-no-asignados
- * Obtiene los partes no asignados a rutas para un mes específico
+ * Obtiene los partes no asignados hasta el fin del mes especificado
  * Formato fecha: YYYY-MM-DD (se usa solo año y mes)
  */
 parteRoutes.get('/calendario/:date/partes-no-asignados', verificarToken, async (req: Request, res: Response) => {
@@ -709,13 +716,12 @@ parteRoutes.get('/calendario/:date/partes-no-asignados', verificarToken, async (
       });
     }
     
-    // Obtener inicio y fin del mes
-    const start = startOfMonth(date);
+    // Obtener solo el fin del mes, ya que queremos todos los partes hasta esa fecha
     const end = endOfMonth(date);
     
-    // Buscar partes no asignados (asignado=false) en ese rango de fecha
+    // Buscar partes no asignados hasta el fin del mes especificado
     const partes = await Parte.find({
-      date: { $gte: start, $lte: end },
+      date: { $lte: end },
       asignado: false
     })
     .populate('customer')

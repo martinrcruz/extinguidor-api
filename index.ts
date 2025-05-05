@@ -22,6 +22,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { generalLimiter, authLimiter, uploadLimiter, workerLimiter, handleRateLimitError } from './middlewares/rate-limiter';
 import { requestLogger, errorLogger } from './middlewares/logger';
+import articuloRoutes from './routes/articuloR';
 
 // Cargar variables de entorno
 config();
@@ -127,6 +128,7 @@ server.app.use('/material', materialRouter);
 server.app.use('/materialparte', materialParteRouter);
 server.app.use('/alertas', alertaRouter);
 server.app.use('/herramientas', herramientaRoutes);
+server.app.use('/articulos', articuloRoutes);
 
 // Iniciar servidor
 const startServer = async () => {

@@ -107,6 +107,10 @@ const parteSchema = new Schema({
     finalizadoTime: {
         type: Date
     },
+    facturacion: {
+        type: Number,
+        default: 0
+    },
     comentarios: [{
         texto: {
             type: String,
@@ -140,6 +144,32 @@ const parteSchema = new Schema({
         fecha: {
             type: Date,
             default: Date.now
+        }
+    }],
+    articulos: [{
+        cantidad: {
+            type: Number,
+            required: true
+        },
+        codigo: {
+            type: String,
+            required: true
+        },
+        grupo: {
+            type: String,
+            required: true
+        },
+        familia: {
+            type: String,
+            required: true
+        },
+        descripcionArticulo: {
+            type: String,
+            required: true
+        },
+        precioVenta: {
+            type: Number,
+            required: true
         }
     }],
     createdDate: {
@@ -182,6 +212,7 @@ export interface IParte extends Document {
     coordinationMethod: 'Llamar antes' | 'Coordinar por email' | 'Coordinar según horarios';
     gestiona: number;
     finalizadoTime?: Date;
+    facturacion: number;
     comentarios: Array<{
         texto: string;
         fecha: Date;
@@ -192,6 +223,14 @@ export interface IParte extends Document {
         url: string;
         tipo: string;
         fecha: Date;
+    }>;
+    articulos: Array<{
+        cantidad: number;
+        codigo: string;
+        grupo: string;
+        familia: string;
+        descripcionArticulo: string;
+        precioVenta: number;
     }>;
     createdDate: Date;
 }
