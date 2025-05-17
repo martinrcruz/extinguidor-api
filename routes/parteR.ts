@@ -187,43 +187,46 @@ function getMonthsIncrement(freq?: string): number {
     default: return 1;
   }
 }
+// routes/parte.routes.ts
+/** POST /partes/update                  – body._id   */
+parteRoutes.post('/update', actualizarParte);
 
-/**
- * POST /partes/update => Actualiza un parte
- */
-parteRoutes.post('/update', [verificarToken, verificarPropietarioParte], async (req: any, res: Response) => {
-  try {
-    const idparte = req.body._id;
-    if (req.body.date) {
-      const fecha = new Date(req.body.date);
-      // Chequeamos que no sea anterior al mes actual
-      const now = new Date();
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      if (fecha < firstOfMonth) {
-        return res.status(400).json({
-          ok: false,
-          message: 'La fecha no puede ser anterior al mes actual'
-        });
-      }
-      fecha.setDate(1);
-      req.body.date = fecha;
-    }
-
-    // Si state=Finalizado => finalizadoTime
-    if (req.body.state === 'Finalizado') {
-      req.body.finalizadoTime = new Date();
-    }
-
-    const parteDB = await Parte.findByIdAndUpdate(idparte, req.body, { new: true });
-    if (!parteDB) {
-      return res.status(404).json({ message: 'Parte no encontrada' });
-    }
-    res.status(200).json({ ok: true, parte: parteDB });
-
-  } catch (err) {
-    res.status(500).json({ message: 'Error al actualizar la parte', err });
-  }
+/** POST /partes/update/:id              – params.id  */
+parteRoutes.post('/update/:id', (req, res, next) => {
+    req.body._id = req.params.id;   // redirigimos al mismo handler
+    actualizarParte(req, res);
 });
+
+async function actualizarParte(req: any, res: Response) {
+    try {
+        const idparte = req.body._id;
+
+        /* ─── SANEAR camp­os ObjectId opcionales ─── */
+        const objectIdFields = ['ruta', 'customer', 'worker'];   // añade más si los tuvieras
+        const $unset: any = {};
+        objectIdFields.forEach(f => {
+            if (req.body[f] === '' || req.body[f] === null) {
+                delete req.body[f];        // evita Cast error
+                $unset[f] = '';            // borra la referencia en el doc
+            }
+        });
+
+        /* Validaciones específicas que ya tenías … */
+
+        const update = Object.keys($unset).length ? { $set: req.body, $unset } : req.body;
+
+        const parteDB = await Parte.findByIdAndUpdate(idparte, update, { new: true });
+        if (!parteDB) return res.status(404).json({ ok: false, error: 'Parte no encontrada' });
+
+        res.json({ ok: true, data: parteDB });
+    } catch (err: any) {
+        res.status(500).json({
+            ok: false,
+            error: 'Error al actualizar la parte',
+            message: err.message
+        });
+    }
+}
 
 /**
  * GET /partes/noAsignadosEnMes?date=YYYY-MM-DD

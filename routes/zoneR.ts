@@ -4,82 +4,79 @@ import { verificarToken } from '../middlewares/autenticacion';
 
 const zoneRoutes = Router();
 
-
-zoneRoutes.get('/prueba', (req: Request, res: Response) => {
-    res.json({
-        ok: true,
-        data: { message: 'todo ok' }
-    })
+/* Ping ─────────────────────────────────────── */
+zoneRoutes.get('/prueba', (_req, res) => {
+    res.json({ ok: true, data: { message: 'todo ok' } });
 });
 
+/* Crear ────────────────────────────────────── */
 zoneRoutes.post('/create', verificarToken, async (req: Request, res: Response) => {
-    const zone: IZone = req.body
     try {
-        const zoneDB = await Zone.create(zone);
-        res.status(201).json({
-            ok: true,
-            data: { zone: zoneDB }
-        });
+        const zoneDB = await Zone.create(req.body as IZone);
+        res.status(201).json({ ok: true, data: { zone: zoneDB } });
     } catch (err: any) {
-        res.status(500).json({ 
-            ok: false,
-            error: 'Error al crear zona',
-            message: err.message
-        });
+        res.status(500).json({ ok: false, error: 'Error al crear zona', message: err.message });
     }
 });
 
-
-//actializar
-zoneRoutes.put('/update', verificarToken, async (req: any, res: Response) => {
-});
-
-// Ruta para eliminar un Zone por su ID
-zoneRoutes.delete('/:id', async (req: Request, res: Response) => {
- 
-});
-
-//obtener Zipcodes
-zoneRoutes.get('/', async (req: Request, res: Response) => {
-    try {
-        const zones: IZone[] = await Zone.find();
-        res.json({
-            ok: true,
-            data: { zones }
-        });
-    } catch (error: any) {
-        res.status(500).json({ 
-            ok: false,
-            error: 'Error al obtener zonas',
-            message: error.message
-        });
+/* Actualizar ─────────────────────────────────
+ *  Recibe el _id en el body, igual que el frontend.   */
+zoneRoutes.put('/update', verificarToken, async (req: Request, res: Response) => {
+    const { _id, ...update } = req.body;
+    if (!_id) {
+        return res.status(400).json({ ok: false, error: 'ID requerido para actualizar' });
     }
-});
 
-// Ruta para obtener una zona específica
-zoneRoutes.get('/:id', async (req: Request, res: Response) => {
-    const { id } = req.params;
     try {
-        const zone: IZone | null = await Zone.findById(id);
-        if (!zone) {
-            return res.status(404).json({
-                ok: false,
-                error: 'Zona no encontrada',
-                message: 'Zona no encontrada'
-            });
+        const zonaActualizada = await Zone.findByIdAndUpdate(_id, update, {
+            new: true,
+            runValidators: true,
+        });
+
+        if (!zonaActualizada) {
+            return res.status(404).json({ ok: false, error: 'Zona no encontrada' });
         }
-        res.json({
-            ok: true,
-            data: { zone }
-        });
+        res.json({ ok: true, data: { zone: zonaActualizada } });
     } catch (error: any) {
-        res.status(500).json({ 
-            ok: false,
-            error: 'Error al obtener zona',
-            message: error.message
-        });
+        res.status(500).json({ ok: false, error: 'Error al actualizar zona', message: error.message });
     }
 });
 
+/* Eliminar ─────────────────────────────────── */
+zoneRoutes.delete('/:id', verificarToken, async (req: Request, res: Response) => {
+    try {
+        const zonaEliminada = await Zone.findByIdAndDelete(req.params.id);
+        if (!zonaEliminada) {
+            return res.status(404).json({ ok: false, error: 'Zona no encontrada' });
+        }
+        res.json({ ok: true, data: { zone: zonaEliminada } });
+    } catch (error: any) {
+        res.status(500).json({ ok: false, error: 'Error al eliminar zona', message: error.message });
+    }
+});
+
+
+/* Listar todas ─────────────────────────────── */
+zoneRoutes.get('/', async (_req, res) => {
+    try {
+        const zones = await Zone.find().populate({ path: 'codezip', select: 'name codezip' });
+        res.json({ ok: true, data: { zones } });
+    } catch (err: any) {
+        res.status(500).json({ ok: false, error: 'Error al obtener zonas', message: err.message });
+    }
+});
+
+/* Obtener una ──────────────────────────────── */
+zoneRoutes.get('/:id', async (req, res) => {
+    try {
+        const zone = await Zone.findById(req.params.id);
+        if (!zone) {
+            return res.status(404).json({ ok: false, error: 'Zona no encontrada' });
+        }
+        res.json({ ok: true, data: { zone } });
+    } catch (error: any) {
+        res.status(500).json({ ok: false, error: 'Error al obtener zona', message: error.message });
+    }
+});
 
 export default zoneRoutes;

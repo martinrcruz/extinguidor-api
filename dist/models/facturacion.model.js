@@ -1,6 +1,8 @@
-import { Schema, model, Document } from 'mongoose';
-
-const facturacionSchema = new Schema({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Facturacion = void 0;
+const mongoose_1 = require("mongoose");
+const facturacionSchema = new mongoose_1.Schema({
     createdDate: {
         type: Date,
     },
@@ -10,33 +12,24 @@ const facturacionSchema = new Schema({
     },
     // Actualizamos la referencia para que apunte al modelo RutaN
     ruta: {
-        type: Schema.Types.ObjectId,
+        type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Ruta',
     },
     // Se asume que el modelo Parte posee un campo 'name'
     parte: {
-        type: Schema.Types.ObjectId,
+        type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Parte',
     },
 });
-
 // Middleware para asignar la fecha de creación
-facturacionSchema.pre('save', function() {
+facturacionSchema.pre('save', function () {
     this.createdDate = new Date();
 });
-
 // Configuración para transformar la salida JSON y eliminar _id y __v
 facturacionSchema.set('toJSON', {
-    transform: function(doc, ret, options) {
+    transform: function (doc, ret, options) {
         delete ret.__v;
         return ret;
     }
 });
-
-export interface IFacturacion extends Document {
-    facturacion: number;
-    ruta: string;
-    parte: string;
-}
-
-export const Facturacion = model<IFacturacion>('Facturacion', facturacionSchema);
+exports.Facturacion = (0, mongoose_1.model)('Facturacion', facturacionSchema);

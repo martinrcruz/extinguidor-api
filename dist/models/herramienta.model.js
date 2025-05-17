@@ -1,15 +1,8 @@
-import { Schema, model, Document } from 'mongoose';
-
-export interface IHerramienta extends Document {
-    name: string;
-    description: string;
-    code: string;
-    // Puedes agregar más campos según las reglas de negocio, por ejemplo:
-    // stock?: number;
-    // category?: string;
-}
-
-const herramientaSchema = new Schema({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Herramienta = void 0;
+const mongoose_1 = require("mongoose");
+const herramientaSchema = new mongoose_1.Schema({
     name: {
         type: String,
         required: [true, 'El nombre de la herramienta es requerido'],
@@ -30,5 +23,4 @@ const herramientaSchema = new Schema({
 }, {
     timestamps: true
 });
-
-export const Herramienta = model<IHerramienta>('Herramienta', herramientaSchema);
+exports.Herramienta = (0, mongoose_1.model)('Herramienta', herramientaSchema);

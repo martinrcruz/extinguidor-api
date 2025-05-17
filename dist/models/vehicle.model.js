@@ -1,16 +1,15 @@
-import { Schema, model, Document } from 'mongoose';
-
-const vehicleSchema = new Schema({
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Vehicle = void 0;
+const mongoose_1 = require("mongoose");
+const vehicleSchema = new mongoose_1.Schema({
     fuel: {
         type: String,
-        enum:["Diesel", "Gasolina"],
-       
+        enum: ["Diesel", "Gasolina"],
     },
     type: {
         type: String,
-        enum:["Furgon", "Turismo"]
-        
+        enum: ["Furgon", "Turismo"]
     },
     modelo: {
         type: String,
@@ -32,22 +31,8 @@ const vehicleSchema = new Schema({
     createdDate: {
         type: Date,
     },
-
 });
-
-vehicleSchema.pre('save', function(){
+vehicleSchema.pre('save', function () {
     this.createdDate = new Date();
-})
-
-
-export interface IVehicle extends Document {
-    fuel: string;
-    type: string;
-    modelo: string;
-    brand: string;
-    photo: string;
-    matricula: string;
-    createdDate: Date;
-}
-
-export const Vehicle = model<IVehicle>('Vehicle', vehicleSchema);
+});
+exports.Vehicle = (0, mongoose_1.model)('Vehicle', vehicleSchema);
