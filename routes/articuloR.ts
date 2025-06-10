@@ -5,13 +5,66 @@ import { verificarToken } from '../middlewares/autenticacion';
 
 const router = Router();
 
-// Obtener todos los artículos
+// Obtener todos los artículos con paginación y filtros
 router.get('/', verificarToken, async (req, res) => {
   try {
-    const articulos = await Articulo.find({ eliminado: false });
+    const { 
+      page = 1, 
+      limit = 100, 
+      search = '', 
+      grupo = '', 
+      familia = '' 
+    } = req.query;
+
+    // Convertir a números
+    const pageNumber = parseInt(page as string, 10);
+    const limitNumber = parseInt(limit as string, 10);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Construir filtros
+    const filters: any = { eliminado: false };
+    
+    // Filtro de búsqueda por texto
+    if (search) {
+      const searchRegex = { $regex: search, $options: 'i' };
+      filters.$or = [
+        { codigo: searchRegex },
+        { descripcionArticulo: searchRegex },
+        { grupo: searchRegex },
+        { familia: searchRegex }
+      ];
+    }
+
+    // Filtros específicos
+    if (grupo) {
+      filters.grupo = { $regex: grupo, $options: 'i' };
+    }
+    
+    if (familia) {
+      filters.familia = { $regex: familia, $options: 'i' };
+    }
+
+    // Obtener artículos con paginación
+    const articulos = await Articulo.find(filters)
+      .sort({ createdDate: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    // Obtener total de documentos para calcular páginas
+    const total = await Articulo.countDocuments(filters);
+    const totalPages = Math.ceil(total / limitNumber);
+
     res.json({
       ok: true,
-      articulos
+      articulos,
+      pagination: {
+        currentPage: pageNumber,
+        totalPages,
+        totalItems: total,
+        itemsPerPage: limitNumber,
+        hasNextPage: pageNumber < totalPages,
+        hasPrevPage: pageNumber > 1
+      }
     });
   } catch (error) {
     console.log(error);

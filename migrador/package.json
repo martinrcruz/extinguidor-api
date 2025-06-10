@@ -1,0 +1,23 @@
+{
+  "name": "migrador-articulos",
+  "version": "1.0.0",
+  "description": "Script para migrar artículos desde Excel a MongoDB",
+  "main": "migracion-articulos.js",
+  "scripts": {
+    "migrate": "node migracion-articulos.js",
+    "validate": "node validador-excel.js",
+    "validate-report": "node validador-excel.js --reporte",
+    "full-process": "npm run validate && npm run migrate",
+    "test-db": "node test-conexion.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "mongoose": "^7.0.0",
+    "xlsx": "^0.18.5",
+    "dotenv": "^16.0.0",
+    "colors": "^1.4.0"
+  },
+  "keywords": ["migration", "excel", "mongodb", "articulos"],
+  "author": "",
+  "license": "ISC"
+} 
