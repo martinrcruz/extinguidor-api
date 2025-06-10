@@ -321,6 +321,42 @@ rutaRoutes.get('/porFecha/:fecha', async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * DELETE /rutas/:id
+ * Elimina una ruta específica por ID
+ */
+rutaRoutes.delete('/:id', verificarToken, async (req: Request, res: Response) => {
+    try {
+        const rutaId = req.params.id;
+        
+        // Opción 1: Eliminación lógica (cambiar eliminado a true)
+        const rutaUpdated = await Ruta.findByIdAndUpdate(
+            rutaId, 
+            { eliminado: true }, 
+            { new: true }
+        );
+        
+        if (!rutaUpdated) {
+            return res.status(404).json({ 
+                ok: false, 
+                message: 'Ruta no encontrada' 
+            });
+        }
 
+        res.json({ 
+            ok: true, 
+            message: 'Ruta eliminada correctamente',
+            ruta: rutaUpdated 
+        });
+
+    } catch (err) {
+        console.error('Error al eliminar ruta =>', err);
+        res.status(500).json({ 
+            ok: false, 
+            message: 'Error al eliminar ruta', 
+            err 
+        });
+    }
+});
 
 export default rutaRoutes;
