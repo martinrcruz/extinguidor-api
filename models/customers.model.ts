@@ -10,6 +10,10 @@ const customerSchema = new Schema({
         type: String,
         required: [true, "Nombre requerido"],
     },
+    active: {
+        type: Boolean,
+        default: true
+    },
     email: {
         type: String,
         required: [true, "Email requerido"],
@@ -130,6 +134,7 @@ customerSchema.pre('save', function(){
 export interface ICustomer extends Document {
     // Campos combinados
     name: string;
+    active: boolean;
     email: string;
     nifCif: string;
     address: string;

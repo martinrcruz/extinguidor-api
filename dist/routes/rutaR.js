@@ -95,6 +95,7 @@ rutaRoutes.get('/worker/:workerId', autenticacion_1.verificarToken, (req, res) =
             .populate('vehicle')
             .populate('users')
             .populate('name')
+            .sort({ _id: -1 }) // Orden descendente por fecha de creación
             .exec();
         res.json({ ok: true, rutas });
     }
@@ -127,6 +128,7 @@ rutaRoutes.get('/disponibles', autenticacion_1.verificarToken, (req, res) => __a
             .populate('vehicle')
             .populate('users')
             .populate('name')
+            .sort({ _id: -1 }) // Orden descendente por fecha de creación
             .exec();
         // 4) En tu proyecto, "disponibles" podría tener más lógica,
         //    ej. no asignadas a un vehículo, etc. Ajusta si corresponde.
@@ -161,7 +163,11 @@ rutaRoutes.get('/:id', autenticacion_1.verificarToken, (req, res) => __awaiter(v
 rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const eliminado = false;
     try {
-        const rutas = yield rutas_model_1.Ruta.find({ eliminado: eliminado }).populate('vehicle').populate('users').populate('name');
+        const rutas = yield rutas_model_1.Ruta.find({ eliminado: eliminado })
+            .populate('vehicle')
+            .populate('users')
+            .populate('name')
+            .sort({ _id: -1 }); // Orden descendente por fecha de creación
         res.json({
             ok: true,
             rutas: rutas
@@ -175,7 +181,11 @@ rutaRoutes.get('/fecha/:date', (req, res) => __awaiter(void 0, void 0, void 0, f
     const date = req.params.date;
     const eliminado = false;
     try {
-        const rutas = yield rutas_model_1.Ruta.find({ date: date }, { eliminado: eliminado }).populate('users').populate('vehicle').populate('name');
+        const rutas = yield rutas_model_1.Ruta.find({ date: date, eliminado: eliminado })
+            .populate('users')
+            .populate('vehicle')
+            .populate('name')
+            .sort({ _id: -1 }); // Orden descendente por fecha de creación
         res.json({
             ok: true,
             rutas: rutas
@@ -199,6 +209,7 @@ rutaRoutes.get('/fecha/:fecha', (req, res) => __awaiter(void 0, void 0, void 0, 
             .populate('vehicle')
             .populate('users')
             .populate('name') // si name es un objectId a RutaN, etc.
+            .sort({ _id: -1 }) // Orden descendente por fecha de creación
             .exec();
         if (!ruta) {
             return res.json({ ok: false, message: 'No hay ruta para esa fecha' });
@@ -240,7 +251,9 @@ rutaRoutes.post('/', (req, res) => __awaiter(void 0, void 0, void 0, function* (
 rutaRoutes.get('/:rutaId/partes', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const rutaId = req.params.rutaId;
     try {
-        const partes = yield parte_model_1.Parte.find({ ruta: rutaId }).exec();
+        const partes = yield parte_model_1.Parte.find({ ruta: rutaId })
+            .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
+            .exec();
         res.json({ ok: true, partes });
     }
     catch (err) {
@@ -288,12 +301,43 @@ rutaRoutes.get('/porFecha/:fecha', (req, res) => __awaiter(void 0, void 0, void 
             .populate('vehicle')
             .populate('users')
             .populate('name')
+            .sort({ _id: -1 }) // Orden descendente por fecha de creación
             .exec();
         res.json({ ok: true, rutas });
     }
     catch (err) {
         console.error('Error GET /rutas/porFecha/:fecha =>', err);
         res.status(500).json({ ok: false, err });
+    }
+}));
+/**
+ * DELETE /rutas/:id
+ * Elimina una ruta específica por ID
+ */
+rutaRoutes.delete('/:id', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const rutaId = req.params.id;
+        // Opción 1: Eliminación lógica (cambiar eliminado a true)
+        const rutaUpdated = yield rutas_model_1.Ruta.findByIdAndUpdate(rutaId, { eliminado: true }, { new: true });
+        if (!rutaUpdated) {
+            return res.status(404).json({
+                ok: false,
+                message: 'Ruta no encontrada'
+            });
+        }
+        res.json({
+            ok: true,
+            message: 'Ruta eliminada correctamente',
+            ruta: rutaUpdated
+        });
+    }
+    catch (err) {
+        console.error('Error al eliminar ruta =>', err);
+        res.status(500).json({
+            ok: false,
+            message: 'Error al eliminar ruta',
+            err
+        });
     }
 }));
 exports.default = rutaRoutes;

@@ -11,6 +11,10 @@ const customerSchema = new mongoose_1.Schema({
         type: String,
         required: [true, "Nombre requerido"],
     },
+    active: {
+        type: Boolean,
+        default: true
+    },
     email: {
         type: String,
         required: [true, "Email requerido"],

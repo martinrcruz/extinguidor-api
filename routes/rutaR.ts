@@ -100,6 +100,7 @@ rutaRoutes.get('/worker/:workerId', verificarToken, async (req: Request, res: Re
       .populate('vehicle')
       .populate('users')
       .populate('name')
+      .sort({ _id: -1 }) // Orden descendente por fecha de creación
       .exec();
 
     res.json({ ok: true, rutas });
@@ -135,6 +136,7 @@ rutaRoutes.get('/disponibles', verificarToken, async (req: Request, res: Respons
             .populate('vehicle')
             .populate('users')
             .populate('name')
+            .sort({ _id: -1 }) // Orden descendente por fecha de creación
             .exec();
 
         // 4) En tu proyecto, "disponibles" podría tener más lógica,
@@ -173,7 +175,11 @@ rutaRoutes.get('/:id', verificarToken, async (req: Request, res: Response) => {
 rutaRoutes.get('/', async (req: Request, res: Response) => {
   const eliminado= false
   try {
-    const rutas: IRuta[] = await Ruta.find({ eliminado: eliminado }).populate('vehicle').populate('users').populate('name');
+    const rutas: IRuta[] = await Ruta.find({ eliminado: eliminado })
+      .populate('vehicle')
+      .populate('users')
+      .populate('name')
+      .sort({ _id: -1 }); // Orden descendente por fecha de creación
     res.json({
       ok: true,
       rutas: rutas
@@ -186,7 +192,11 @@ rutaRoutes.get('/fecha/:date', async (req: Request, res: Response) => {
   const date =  req.params.date
   const eliminado= false
   try {
-    const rutas: IRuta[] = await Ruta.find({ date: date },{ eliminado: eliminado }).populate('users').populate('vehicle').populate('name');
+    const rutas: IRuta[] = await Ruta.find({ date: date, eliminado: eliminado })
+      .populate('users')
+      .populate('vehicle')
+      .populate('name')
+      .sort({ _id: -1 }); // Orden descendente por fecha de creación
     res.json({
       ok: true,
       rutas: rutas
@@ -212,6 +222,7 @@ rutaRoutes.get('/fecha/:fecha', async (req: Request, res: Response) => {
             .populate('vehicle')
             .populate('users')
             .populate('name') // si name es un objectId a RutaN, etc.
+            .sort({ _id: -1 }) // Orden descendente por fecha de creación
             .exec();
 
         if (!ruta) {
@@ -257,7 +268,9 @@ rutaRoutes.post('/', async (req: Request, res: Response) => {
 rutaRoutes.get('/:rutaId/partes', async (req: Request, res: Response) => {
     const rutaId = req.params.rutaId;
     try {
-        const partes = await Parte.find({ ruta: rutaId }).exec();
+        const partes = await Parte.find({ ruta: rutaId })
+            .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
+            .exec();
         res.json({ ok: true, partes });
     } catch (err) {
         console.error(`Error GET /rutas/${rutaId}/partes`, err);
@@ -312,6 +325,7 @@ rutaRoutes.get('/porFecha/:fecha', async (req: Request, res: Response) => {
             .populate('vehicle')
             .populate('users')
             .populate('name')
+            .sort({ _id: -1 }) // Orden descendente por fecha de creación
             .exec();
 
         res.json({ ok: true, rutas });

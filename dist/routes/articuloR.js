@@ -16,13 +16,52 @@ const express_1 = require("express");
 const articulo_model_1 = __importDefault(require("../models/articulo.model"));
 const autenticacion_1 = require("../middlewares/autenticacion");
 const router = (0, express_1.Router)();
-// Obtener todos los artículos
+// Obtener todos los artículos con paginación y filtros
 router.get('/', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const articulos = yield articulo_model_1.default.find({ eliminado: false });
+        const { page = 1, limit = 100, search = '', grupo = '', familia = '' } = req.query;
+        // Convertir a números
+        const pageNumber = parseInt(page, 10);
+        const limitNumber = parseInt(limit, 10);
+        const skip = (pageNumber - 1) * limitNumber;
+        // Construir filtros
+        const filters = { eliminado: false };
+        // Filtro de búsqueda por texto
+        if (search) {
+            const searchRegex = { $regex: search, $options: 'i' };
+            filters.$or = [
+                { codigo: searchRegex },
+                { descripcionArticulo: searchRegex },
+                { grupo: searchRegex },
+                { familia: searchRegex }
+            ];
+        }
+        // Filtros específicos
+        if (grupo) {
+            filters.grupo = { $regex: grupo, $options: 'i' };
+        }
+        if (familia) {
+            filters.familia = { $regex: familia, $options: 'i' };
+        }
+        // Obtener artículos con paginación
+        const articulos = yield articulo_model_1.default.find(filters)
+            .sort({ createdDate: -1 })
+            .skip(skip)
+            .limit(limitNumber);
+        // Obtener total de documentos para calcular páginas
+        const total = yield articulo_model_1.default.countDocuments(filters);
+        const totalPages = Math.ceil(total / limitNumber);
         res.json({
             ok: true,
-            articulos
+            articulos,
+            pagination: {
+                currentPage: pageNumber,
+                totalPages,
+                totalItems: total,
+                itemsPerPage: limitNumber,
+                hasNextPage: pageNumber < totalPages,
+                hasPrevPage: pageNumber > 1
+            }
         });
     }
     catch (error) {

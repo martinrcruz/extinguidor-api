@@ -20,7 +20,7 @@ const documentsParte_model_1 = require("../models/documentsParte.model");
 const date_fns_1 = require("date-fns");
 const validacion_1 = require("../middlewares/validacion");
 const verificar_propietario_1 = require("../middlewares/verificar-propietario");
-const customer_model_1 = require("../models/customer.model");
+const customers_model_1 = require("../models/customers.model");
 const parteRoutes = (0, express_1.Router)();
 const fileSystem = new file_system_1.default();
 // Middleware de validación para creación de partes
@@ -30,9 +30,17 @@ const validarCreacionParte = (0, validacion_1.validarDatos)({
     date: { type: 'date', required: true },
     customer: { type: 'string', required: true },
     address: { type: 'string', required: true },
+    state: { type: 'string', enum: ['Pendiente', 'EnProceso', 'Finalizado'] },
+    type: { type: 'string', enum: ['Obra', 'Mantenimiento', 'Correctivo', 'Visitas'] },
+    categoria: { type: 'string', enum: ['Extintores', 'Incendio', 'Robo', 'CCTV', 'Pasiva', 'Venta'] },
+    facturacion: { type: 'number' },
+    ruta: { type: 'string' },
+    coordinationMethod: { type: 'string', enum: ['Llamar antes', 'Coordinar por email', 'Coordinar según horarios'] },
+    gestiona: { type: 'number' },
     periodico: { type: 'boolean' },
     frequency: { type: 'string', enum: ['Mensual', 'Trimestral', 'Semestral', 'Anual'] },
-    endDate: { type: 'date' }
+    endDate: { type: 'date' },
+    articulos: { type: 'array' }
 });
 /**
  * GET /partes => lista todas, populando "customer" y "ruta"
@@ -48,7 +56,7 @@ parteRoutes.get('/', autenticacion_1.verificarToken, (req, res) => __awaiter(voi
                 .populate('ruta')
                 .skip(skip)
                 .limit(limit)
-                .sort({ date: -1 })
+                .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
                 .exec(),
             parte_model_1.Parte.countDocuments()
         ]);
@@ -77,31 +85,45 @@ parteRoutes.get('/', autenticacion_1.verificarToken, (req, res) => __awaiter(voi
  */
 parteRoutes.post('/create', [autenticacion_1.verificarToken, validarCreacionParte], (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log('===========================');
+        console.log('CREAR PARTE - DESPUÉS de validación');
+        console.log('Body recibido:', JSON.stringify(req.body, null, 2));
         const data = req.body;
+        console.log('Paso 1: Verificando documentos');
         // Documentos (opc.)
         const documentsParte = data.docs;
         delete data.docs;
+        console.log('Paso 2: Buscando cliente:', data.customer);
         // Verificar si el cliente existe y está activo
-        const customer = yield customer_model_1.Customer.findById(data.customer);
+        const customer = yield customers_model_1.Customer.findById(data.customer);
+        console.log('Cliente encontrado:', customer ? 'SÍ' : 'NO');
         if (!customer) {
+            console.log('ERROR: Cliente no encontrado');
             return res.status(404).json({
                 ok: false,
                 error: 'Cliente no encontrado',
                 message: 'Cliente no encontrado'
             });
         }
-        if (!customer.active) {
+        console.log('Cliente activo:', customer.active);
+        // Verificar si el cliente está activo (por defecto true si no existe)
+        if (customer.active === false) {
+            console.log('ERROR: Cliente inactivo');
             return res.status(400).json({
                 ok: false,
                 error: 'Cliente inactivo',
                 message: 'El cliente está inactivo'
             });
         }
+        console.log('Paso 3: Verificando fecha:', data.date);
         // Verificar y forzar day=1 en la fecha. No anterior al mes actual
         const fecha = new Date(data.date);
         const now = new Date();
         const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        console.log('Fecha parseada:', fecha);
+        console.log('Primer día del mes:', firstOfMonth);
         if (fecha < firstOfMonth) {
+            console.log('ERROR: Fecha anterior al mes actual');
             return res.status(400).json({
                 ok: false,
                 error: 'Fecha inválida',
@@ -110,6 +132,8 @@ parteRoutes.post('/create', [autenticacion_1.verificarToken, validarCreacionPart
         }
         fecha.setDate(1);
         data.date = fecha;
+        console.log('Fecha ajustada al día 1:', data.date);
+        console.log('Paso 4: Verificando solapamientos para periódicos');
         // Verificar solapamiento de fechas para partes periódicos
         if (data.periodico && data.endDate) {
             const fechaFin = new Date(data.endDate);
@@ -118,6 +142,7 @@ parteRoutes.post('/create', [autenticacion_1.verificarToken, validarCreacionPart
                 date: { $gte: fecha, $lte: fechaFin }
             });
             if (partesExistentes.length > 0) {
+                console.log('ERROR: Partes solapados');
                 return res.status(400).json({
                     ok: false,
                     error: 'Partes solapados',
@@ -125,8 +150,10 @@ parteRoutes.post('/create', [autenticacion_1.verificarToken, validarCreacionPart
                 });
             }
         }
+        console.log('Paso 5: Verificando si es periódico:', data.periodico);
         // Revisar si es periódico
         if (data.periodico && data.endDate) {
+            console.log('Creando parte periódico');
             const fechaFin = new Date(data.endDate);
             const inc = getMonthsIncrement(data.frequency);
             let fechaActual = new Date(data.date);
@@ -155,7 +182,10 @@ parteRoutes.post('/create', [autenticacion_1.verificarToken, validarCreacionPart
         }
         else {
             // Caso no periódico
+            console.log('Paso 6: Creando parte NO periódico');
+            console.log('Datos para crear:', JSON.stringify(data, null, 2));
             const parteDB = yield parte_model_1.Parte.create(data);
+            console.log('Parte creado exitosamente:', parteDB._id);
             if (documentsParte) {
                 for (const doc of documentsParte) {
                     yield documentsParte_model_1.DocumentParte.create(Object.assign(Object.assign({}, doc), { parte: parteDB._id }));
@@ -168,7 +198,12 @@ parteRoutes.post('/create', [autenticacion_1.verificarToken, validarCreacionPart
         }
     }
     catch (err) {
-        console.error('Error al crear parte =>', err);
+        console.error('===========================');
+        console.error('ERROR AL CREAR PARTE');
+        console.error('Error completo:', err);
+        console.error('Error message:', err.message);
+        console.error('Error stack:', err.stack);
+        console.error('===========================');
         res.status(500).json({
             ok: false,
             error: 'Error al crear parte',
@@ -243,7 +278,7 @@ parteRoutes.get('/noAsignadosEnMes', (req, res) => __awaiter(void 0, void 0, voi
         })
             .populate('customer')
             .populate('ruta')
-            .sort({ date: 1 }) // Ordenar por fecha ascendente
+            .sort({ createdDate: -1 }) // Ordenar por fecha de creación descendente
             .exec();
         res.json({ ok: true, partes });
     }
@@ -267,7 +302,8 @@ parteRoutes.get('/contrato/:contrato', (req, res) => __awaiter(void 0, void 0, v
             .populate({
             path: 'customer',
             populate: { path: 'zone' }
-        });
+        })
+            .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
         res.json({ ok: true, partes });
     }
     catch (error) {
@@ -284,7 +320,8 @@ parteRoutes.get('/ruta/:ruta', (req, res) => __awaiter(void 0, void 0, void 0, f
             .populate({
             path: 'customer',
             populate: { path: 'zone' }
-        });
+        })
+            .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
         res.json({ ok: true, partes });
     }
     catch (error) {
@@ -313,7 +350,8 @@ parteRoutes.get('/noasignados', (req, res) => __awaiter(void 0, void 0, void 0, 
         }).populate({
             path: 'customer',
             populate: { path: 'zone' }
-        });
+        })
+            .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
         res.json({ ok: true, partes });
     }
     catch (error) {
@@ -340,7 +378,8 @@ parteRoutes.get('/noasignado/:fecha', (req, res) => __awaiter(void 0, void 0, vo
         }).populate({
             path: 'customer',
             populate: { path: 'zone' }
-        });
+        })
+            .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
         res.json({ ok: true, partes });
     }
     catch (error) {
@@ -367,7 +406,8 @@ parteRoutes.get('/asignado', (req, res) => __awaiter(void 0, void 0, void 0, fun
         }).populate({
             path: 'customer',
             populate: { path: 'zone' }
-        }).populate('ruta');
+        }).populate('ruta')
+            .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
         res.json({ ok: true, partes });
     }
     catch (error) {
@@ -395,7 +435,8 @@ parteRoutes.get('/nofin', (req, res) => __awaiter(void 0, void 0, void 0, functi
         }).populate({
             path: 'customer',
             populate: { path: 'zone' }
-        }).populate('ruta');
+        }).populate('ruta')
+            .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
         res.json({ ok: true, partes });
     }
     catch (error) {
@@ -592,6 +633,7 @@ parteRoutes.get('/worker/:workerId', autenticacion_1.verificarToken, (req, res) 
         const partes = yield parte_model_1.Parte.find(query)
             .populate('customer')
             .populate('ruta')
+            .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
             .exec();
         res.json({ ok: true, partes });
     }
@@ -678,7 +720,7 @@ parteRoutes.get('/calendario/:date/partes-no-asignados', autenticacion_1.verific
             asignado: false
         })
             .populate('customer')
-            .sort({ date: 1 })
+            .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
             .exec();
         res.json({
             ok: true,
@@ -720,7 +762,7 @@ parteRoutes.get('/calendario/:date/partes-finalizados', autenticacion_1.verifica
         })
             .select('date facturacion customer')
             .populate('customer', 'name')
-            .sort({ date: 1 })
+            .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
             .exec();
         res.json({
             ok: true,
