@@ -113,13 +113,33 @@ parteRoutes.post('/create', [verificarToken, validarCreacionParte], async (req: 
 
     console.log('Paso 3: Verificando fecha:', data.date);
     // Verificar y forzar day=1 en la fecha. No anterior al mes actual
-    const fecha = new Date(data.date);
+    // Parsear fecha como fecha local para evitar problemas de timezone
+    let fecha: Date;
+    if (typeof data.date === 'string') {
+      // Si viene como string YYYY-MM-DD, parsear como fecha local
+      const [year, month, day] = data.date.split('-').map(Number);
+      fecha = new Date(year, month - 1, day);
+    } else if (data.date instanceof Date) {
+      fecha = new Date(data.date);
+    } else {
+      return res.status(400).json({
+        ok: false,
+        error: 'Fecha inválida',
+        message: 'La fecha debe ser un string en formato YYYY-MM-DD o un objeto Date'
+      });
+    }
+    
     const now = new Date();
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    firstOfMonth.setHours(0, 0, 0, 0);
     console.log('Fecha parseada:', fecha);
     console.log('Primer día del mes:', firstOfMonth);
     
-    if (fecha < firstOfMonth) {
+    // Comparar solo año y mes (ignorar día)
+    const fechaYearMonth = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+    fechaYearMonth.setHours(0, 0, 0, 0);
+    
+    if (fechaYearMonth < firstOfMonth) {
       console.log('ERROR: Fecha anterior al mes actual');
       return res.status(400).json({
         ok: false,
@@ -127,7 +147,9 @@ parteRoutes.post('/create', [verificarToken, validarCreacionParte], async (req: 
         message: 'La fecha no puede ser anterior al mes actual'
       });
     }
+    // Forzar al día 1 del mes para normalizar
     fecha.setDate(1);
+    fecha.setHours(0, 0, 0, 0); // Medianoche en hora local para evitar problemas de timezone
     data.date = fecha;
     console.log('Fecha ajustada al día 1:', data.date);
 
@@ -290,13 +312,16 @@ parteRoutes.get('/noAsignadosEnMes', async (req: Request, res: Response) => {
     .sort({ createdDate: -1 })  // Ordenar por fecha de creación descendente
     .exec();
 
-    res.json({ ok: true, partes });
-  } catch (err) {
+    res.json({ 
+      ok: true, 
+      data: { partes }
+    });
+  } catch (err: any) {
     console.error('Error GET /partes/noAsignadosEnMes', err);
     res.status(500).json({ 
       ok: false, 
       error: 'Error al obtener partes no asignados',
-      message: err instanceof Error ? err.message : 'Error desconocido'
+      message: err.message || 'Error desconocido'
     });
   }
 });
@@ -304,7 +329,7 @@ parteRoutes.get('/noAsignadosEnMes', async (req: Request, res: Response) => {
 /**
  * GET /partes/contrato/:contrato
  */
-parteRoutes.get('/contrato/:contrato', async (req: Request, res: Response) => {
+parteRoutes.get('/contrato/:contrato', verificarToken, async (req: Request, res: Response) => {
   const contrato = req.params.contrato;
   try {
     const partes: IParte[] = await Parte.find({ customer: contrato })
@@ -314,16 +339,24 @@ parteRoutes.get('/contrato/:contrato', async (req: Request, res: Response) => {
           populate: { path: 'zone' }
         })
         .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
-    res.json({ ok: true, partes });
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener los rutas', error });
+    res.json({ 
+      ok: true, 
+      data: { partes }
+    });
+  } catch (error: any) {
+    console.error('Error GET /partes/contrato/:contrato', error);
+    res.status(500).json({ 
+      ok: false,
+      error: 'Error al obtener los partes',
+      message: error.message || 'Error desconocido'
+    });
   }
 });
 
 /**
  * GET /partes/ruta/:ruta
  */
-parteRoutes.get('/ruta/:ruta', async (req: Request, res: Response) => {
+parteRoutes.get('/ruta/:ruta', verificarToken, async (req: Request, res: Response) => {
   const ruta = req.params.ruta;
   try {
     const partes: IParte[] = await Parte.find({ ruta })
@@ -332,9 +365,17 @@ parteRoutes.get('/ruta/:ruta', async (req: Request, res: Response) => {
           populate: { path: 'zone' }
         })
         .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
-    res.json({ ok: true, partes });
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener los rutas', error });
+    res.json({ 
+      ok: true, 
+      data: { partes }
+    });
+  } catch (error: any) {
+    console.error('Error GET /partes/ruta/:ruta', error);
+    res.status(500).json({ 
+      ok: false,
+      error: 'Error al obtener los partes',
+      message: error.message || 'Error desconocido'
+    });
   }
 });
 
@@ -365,9 +406,17 @@ parteRoutes.get('/noasignados', async (req: Request, res: Response) => {
     })
     .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
 
-    res.json({ ok: true, partes });
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener los partes', error });
+    res.json({ 
+      ok: true, 
+      data: { partes }
+    });
+  } catch (error: any) {
+    console.error('Error GET /partes/noasignados', error);
+    res.status(500).json({ 
+      ok: false,
+      error: 'Error al obtener los partes',
+      message: error.message || 'Error desconocido'
+    });
   }
 });
 
@@ -396,9 +445,17 @@ parteRoutes.get('/noasignado/:fecha', async (req: Request, res: Response) => {
     })
     .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
 
-    res.json({ ok: true, partes });
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener los partes', error });
+    res.json({ 
+      ok: true, 
+      data: { partes }
+    });
+  } catch (error: any) {
+    console.error('Error GET /partes/noasignado/:fecha', error);
+    res.status(500).json({ 
+      ok: false,
+      error: 'Error al obtener los partes',
+      message: error.message || 'Error desconocido'
+    });
   }
 });
 
@@ -427,9 +484,17 @@ parteRoutes.get('/asignado', async (req: Request, res: Response) => {
     }).populate('ruta')
     .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
 
-    res.json({ ok: true, partes });
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener los partes', error });
+    res.json({ 
+      ok: true, 
+      data: { partes }
+    });
+  } catch (error: any) {
+    console.error('Error GET /partes/asignado', error);
+    res.status(500).json({ 
+      ok: false,
+      error: 'Error al obtener los partes',
+      message: error.message || 'Error desconocido'
+    });
   }
 });
 
@@ -480,9 +545,17 @@ parteRoutes.get('/finalizadasEnMes', async (req: Request, res: Response) => {
       date: { $gte: monthStart, $lte: monthEnd }
     }).exec();
 
-    res.json({ ok: true, partes });
-  } catch (err) {
-    res.status(500).json({ ok: false, err });
+    res.json({ 
+      ok: true, 
+      data: { partes }
+    });
+  } catch (err: any) {
+    console.error('Error GET /partes/finalizadasEnMes', err);
+    res.status(500).json({ 
+      ok: false, 
+      error: 'Error al obtener partes finalizados',
+      message: err.message || 'Error desconocido'
+    });
   }
 });
 
@@ -498,11 +571,23 @@ parteRoutes.get('/:id', async (req: Request, res: Response) => {
           populate: { path: 'zone' }
         }).exec();
     if (!parte) {
-      return res.status(404).json({ ok: false, message: 'Parte no encontrada' });
+      return res.status(404).json({ 
+        ok: false, 
+        error: 'Parte no encontrada',
+        message: 'Parte no encontrada'
+      });
     }
-    res.json({ ok: true, parte });
-  } catch (err) {
-    res.status(500).json({ message: 'Error al obtener parte', err });
+    res.json({ 
+      ok: true, 
+      data: { parte }
+    });
+  } catch (err: any) {
+    console.error('Error GET /partes/:id', err);
+    res.status(500).json({ 
+      ok: false,
+      error: 'Error al obtener parte',
+      message: err.message || 'Error desconocido'
+    });
   }
 });
 
@@ -514,11 +599,23 @@ parteRoutes.delete('/:id', async (req: Request, res: Response) => {
   try {
     const parteDeleted = await Parte.findByIdAndDelete(req.params.id);
     if (!parteDeleted) {
-      return res.status(404).json({ ok: false, message: 'No encontrado' });
+      return res.status(404).json({ 
+        ok: false, 
+        error: 'Parte no encontrado',
+        message: 'No encontrado'
+      });
     }
-    res.json({ ok: true, parte: parteDeleted });
-  } catch (err) {
-    res.status(500).json({ message: 'Error al eliminar parte', err });
+    res.json({ 
+      ok: true, 
+      data: { parte: parteDeleted }
+    });
+  } catch (err: any) {
+    console.error('Error DELETE /partes/:id', err);
+    res.status(500).json({ 
+      ok: false,
+      error: 'Error al eliminar parte',
+      message: err.message || 'Error desconocido'
+    });
   }
 });
 
@@ -679,9 +776,17 @@ parteRoutes.get('/worker/:workerId', verificarToken, async (req: Request, res: R
       .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
       .exec();
     
-    res.json({ ok: true, partes });
+    res.json({ 
+      ok: true, 
+      data: { partes }
+    });
   } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+    console.error('Error GET /partes/worker/:workerId', error);
+    res.status(500).json({ 
+      ok: false, 
+      error: 'Error al obtener partes del trabajador',
+      message: error.message || 'Error desconocido'
+    });
   }
 });
 
@@ -737,13 +842,16 @@ parteRoutes.put('/:id/status', verificarToken, async (req: any, res: Response) =
     // Establecer encabezado de caché para prevenir solicitudes repetidas
     res.setHeader('Cache-Control', 'private, max-age=10');
 
-    res.json({ ok: true, parte });
+    res.json({ 
+      ok: true, 
+      data: { parte }
+    });
   } catch (error: any) {
     console.error('Error al actualizar estado de parte:', error);
     res.status(500).json({ 
       ok: false, 
       error: 'Error al actualizar el estado',
-      message: error.message
+      message: error.message || 'Error desconocido'
     });
   }
 });
@@ -826,14 +934,14 @@ parteRoutes.get('/calendario/:date/partes-finalizados', verificarToken, async (r
     
     res.json({ 
       ok: true, 
-      partes
+      data: { partes }
     });
   } catch (error: any) {
     console.error('Error en GET /calendario/:date/partes-finalizados =>', error);
     res.status(500).json({ 
       ok: false, 
       error: 'Error al obtener partes finalizados',
-      message: error.message
+      message: error.message || 'Error desconocido'
     });
   }
 });
