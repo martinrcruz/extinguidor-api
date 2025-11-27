@@ -199,7 +199,8 @@ rutaRoutes.get('/disponibles', verificarToken, async (req: Request, res: Respons
 
         res.json({
             ok: true,
-            data: { rutas: rutasDisponibles }
+            data: { rutas: rutasDisponibles },
+            rutas: rutasDisponibles // compatibilidad con frontend legacy
         });
     } catch (err: any) {
         console.error('Error GET /rutas/disponibles =>', err);
