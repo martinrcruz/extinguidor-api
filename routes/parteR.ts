@@ -975,27 +975,15 @@ parteRoutes.get('/calendario/:date/rutas', verificarToken, async (req: Request, 
     });
     
     const data = await response.json();
-
-    if (!data.ok) {
-      throw new Error(data.error || 'Error al obtener rutas');
-    }
-
-    // Normalizar estructura de respuesta del endpoint /rutas/porFecha
-    const rutas = Array.isArray(data.rutas)
-      ? data.rutas
-      : Array.isArray(data.data?.rutas)
-        ? data.data.rutas
-        : [];
     
-    res.json({ 
-      ok: true, 
-      data: { rutas } 
-    });
-
-    if (!rutas.length) {
-      console.warn(`[Calendario] No se encontraron rutas para ${dateStr}`);
+    // Devolver el mismo formato de respuesta
+    if (data.ok) {
+      res.json({ 
+        ok: true, 
+        rutas: data.rutas 
+      });
     } else {
-      console.log(`[Calendario] Rutas devueltas para ${dateStr}: ${rutas.length}`);
+      throw new Error(data.error || 'Error al obtener rutas');
     }
   } catch (error: any) {
     console.error('Error en GET /calendario/:date/rutas =>', error);

@@ -30,16 +30,29 @@ exports.workerLimiter = (0, express_rate_limit_1.default)({
     skipSuccessfulRequests: true // No contar peticiones exitosas
 });
 // Limiter específico para autenticación
-exports.authLimiter = (0, express_rate_limit_1.default)({
-    windowMs: 60 * 60 * 1000,
-    max: 5,
-    message: {
-        ok: false,
-        error: 'Demasiados intentos de inicio de sesión, por favor intente más tarde'
-    },
-    standardHeaders: true,
-    legacyHeaders: false
-});
+// En desarrollo/test: DESACTIVADO temporalmente para permitir tests E2E
+// En producción: estricto para seguridad
+const isDevelopment = process.env.NODE_ENV !== 'production';
+const isTest = process.env.NODE_ENV === 'test' || process.env.CI === 'true';
+// Middleware que desactiva el rate limiter en desarrollo/test
+const authLimiter = (req, res, next) => {
+    // En desarrollo/test, saltar completamente el rate limiting
+    if (isDevelopment || isTest) {
+        return next();
+    }
+    // En producción, aplicar rate limiting estricto
+    return (0, express_rate_limit_1.default)({
+        windowMs: 60 * 60 * 1000,
+        max: 5,
+        message: {
+            ok: false,
+            error: 'Demasiados intentos de inicio de sesión, por favor intente más tarde'
+        },
+        standardHeaders: true,
+        legacyHeaders: false
+    })(req, res, next);
+};
+exports.authLimiter = authLimiter;
 // Limiter para subida de archivos
 exports.uploadLimiter = (0, express_rate_limit_1.default)({
     windowMs: 60 * 60 * 1000,

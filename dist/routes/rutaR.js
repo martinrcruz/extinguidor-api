@@ -22,20 +22,37 @@ rutaRoutes.get('/prueba', autenticacion_1.verificarToken, (req, res) => {
     });
 });
 rutaRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const ruta = req.body;
-    console.log(ruta);
     try {
         const { date, name, state, vehicle, users, comentarios, encargado, herramientas } = req.body;
-        console.log(date);
         // Encargado obligatorio
         if (!encargado) {
             return res.status(400).json({
                 ok: false,
-                message: 'Encargado es obligatorio'
+                error: 'Encargado es obligatorio',
+                message: 'El encargado es obligatorio'
+            });
+        }
+        // Normalizar la fecha para evitar problemas de timezone
+        // Si viene como string YYYY-MM-DD, crear Date en hora local (no UTC)
+        let fechaNormalizada;
+        if (typeof date === 'string') {
+            // Parsear como fecha local para evitar problemas de timezone
+            const [year, month, day] = date.split('-').map(Number);
+            fechaNormalizada = new Date(year, month - 1, day);
+            fechaNormalizada.setHours(12, 0, 0, 0); // Mediodía para evitar problemas de timezone
+        }
+        else if (date instanceof Date) {
+            fechaNormalizada = new Date(date);
+        }
+        else {
+            return res.status(400).json({
+                ok: false,
+                error: 'Fecha inválida',
+                message: 'La fecha debe ser un string en formato YYYY-MM-DD o un objeto Date'
             });
         }
         const rutaDB = yield rutas_model_1.Ruta.create({
-            date,
+            date: fechaNormalizada,
             name,
             state: state || 'Pendiente',
             vehicle: vehicle || null,
@@ -44,33 +61,65 @@ rutaRoutes.post('/create', autenticacion_1.verificarToken, (req, res) => __await
             encargado,
             herramientas: herramientas || []
         });
-        res.status(201).json({ ok: true, ruta: rutaDB });
+        // Estandarizar respuesta
+        res.status(201).json({
+            ok: true,
+            data: { ruta: rutaDB }
+        });
     }
     catch (err) {
-        res.status(500).json({ message: 'Error al crear ruta', err });
+        console.error('Error al crear ruta:', err);
+        res.status(500).json({
+            ok: false,
+            error: 'Error al crear ruta',
+            message: err.message || 'Error desconocido'
+        });
     }
 }));
-//actializar
+//actualizar
 rutaRoutes.post('/update', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const updatedRutaData = req.body;
-    console.log(updatedRutaData);
     try {
         const idruta = req.body._id;
+        if (!idruta) {
+            return res.status(400).json({
+                ok: false,
+                error: 'ID de ruta requerido',
+                message: 'El ID de la ruta es obligatorio'
+            });
+        }
         if (!req.body.encargado) {
             return res.status(400).json({
                 ok: false,
-                message: 'Encargado es obligatorio'
+                error: 'Encargado es obligatorio',
+                message: 'El encargado es obligatorio'
             });
         }
-        const updatedRutaData = req.body;
-        const rutaDB = yield rutas_model_1.Ruta.findByIdAndUpdate(idruta, updatedRutaData, { new: true });
-        if (!rutaDB) {
-            return res.status(404).json({ message: 'Ruta no encontrada' });
+        // Normalizar fecha si viene en el body
+        if (req.body.date && typeof req.body.date === 'string') {
+            const [year, month, day] = req.body.date.split('-').map(Number);
+            req.body.date = new Date(year, month - 1, day);
+            req.body.date.setHours(12, 0, 0, 0);
         }
-        res.status(200).json({ ok: true, ruta: rutaDB });
+        const rutaDB = yield rutas_model_1.Ruta.findByIdAndUpdate(idruta, req.body, { new: true });
+        if (!rutaDB) {
+            return res.status(404).json({
+                ok: false,
+                error: 'Ruta no encontrada',
+                message: 'Ruta no encontrada'
+            });
+        }
+        res.status(200).json({
+            ok: true,
+            data: { ruta: rutaDB }
+        });
     }
     catch (err) {
-        res.status(500).json({ message: 'Error al actualizar la ruta', err });
+        console.error('Error al actualizar ruta:', err);
+        res.status(500).json({
+            ok: false,
+            error: 'Error al actualizar la ruta',
+            message: err.message || 'Error desconocido'
+        });
     }
 }));
 /**
@@ -97,10 +146,17 @@ rutaRoutes.get('/worker/:workerId', autenticacion_1.verificarToken, (req, res) =
             .populate('name')
             .sort({ _id: -1 }) // Orden descendente por fecha de creación
             .exec();
-        res.json({ ok: true, rutas });
+        res.json({
+            ok: true,
+            data: { rutas }
+        });
     }
     catch (error) {
-        res.status(500).json({ ok: false, error: error.message });
+        res.status(500).json({
+            ok: false,
+            error: 'Error al obtener rutas del trabajador',
+            message: error.message
+        });
     }
 }));
 rutaRoutes.get('/disponibles', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -134,12 +190,16 @@ rutaRoutes.get('/disponibles', autenticacion_1.verificarToken, (req, res) => __a
         //    ej. no asignadas a un vehículo, etc. Ajusta si corresponde.
         res.json({
             ok: true,
-            rutas: rutasDisponibles
+            data: { rutas: rutasDisponibles }
         });
     }
     catch (err) {
         console.error('Error GET /rutas/disponibles =>', err);
-        res.status(500).json({ ok: false, err });
+        res.status(500).json({
+            ok: false,
+            error: 'Error al obtener rutas disponibles',
+            message: err.message || 'Error desconocido'
+        });
     }
 }));
 rutaRoutes.get('/:id', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -149,18 +209,27 @@ rutaRoutes.get('/:id', autenticacion_1.verificarToken, (req, res) => __awaiter(v
         if (ruta) {
             res.json({
                 ok: true,
-                ruta: ruta
+                data: { ruta }
             });
         }
         else {
-            res.status(404).json({ message: 'ruta no encontrada' });
+            res.status(404).json({
+                ok: false,
+                error: 'Ruta no encontrada',
+                message: 'Ruta no encontrada'
+            });
         }
     }
     catch (error) {
-        res.status(500).json({ message: 'Error al obtener el evento', error });
+        console.error('Error al obtener ruta:', error);
+        res.status(500).json({
+            ok: false,
+            error: 'Error al obtener la ruta',
+            message: error.message || 'Error desconocido'
+        });
     }
 }));
-rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaRoutes.get('/', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const eliminado = false;
     try {
         const rutas = yield rutas_model_1.Ruta.find({ eliminado: eliminado })
@@ -170,95 +239,80 @@ rutaRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             .sort({ _id: -1 }); // Orden descendente por fecha de creación
         res.json({
             ok: true,
-            rutas: rutas
+            data: { rutas }
         });
     }
     catch (error) {
-        res.status(500).json({ message: 'Error al obtener los rutas', error });
-    }
-}));
-rutaRoutes.get('/fecha/:date', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const date = req.params.date;
-    const eliminado = false;
-    try {
-        const rutas = yield rutas_model_1.Ruta.find({ date: date, eliminado: eliminado })
-            .populate('users')
-            .populate('vehicle')
-            .populate('name')
-            .sort({ _id: -1 }); // Orden descendente por fecha de creación
-        res.json({
-            ok: true,
-            rutas: rutas
+        console.error('Error al obtener rutas:', error);
+        res.status(500).json({
+            ok: false,
+            error: 'Error al obtener los rutas',
+            message: error.message || 'Error desconocido'
         });
     }
-    catch (error) {
-        res.status(500).json({ message: 'Error al obtener los rutas', error });
-    }
 }));
+// Este endpoint está duplicado, se mantiene el de abajo /fecha/:fecha
 /**
  * GET /rutas/fecha/:fecha
- * Devuelve la ruta asignada a esa fecha (si existe).
+ * Devuelve las rutas asignadas a esa fecha.
  * Formato de fecha: 'YYYY-MM-DD'
  */
-rutaRoutes.get('/fecha/:fecha', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaRoutes.get('/fecha/:fecha', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const fechaParam = req.params.fecha; // "2025-04-10"
     try {
-        // Si permites solo 1 ruta al día, usas findOne.
-        // Si permites múltiples rutas, usas find.
-        const ruta = yield rutas_model_1.Ruta.findOne({ date: fechaParam })
+        // Parsear fecha como fecha local para evitar problemas de timezone
+        const [year, month, day] = fechaParam.split('-').map(Number);
+        const start = new Date(year, month - 1, day);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(year, month - 1, day);
+        end.setHours(23, 59, 59, 999);
+        const rutas = yield rutas_model_1.Ruta.find({
+            date: { $gte: start, $lte: end },
+            eliminado: false
+        })
             .populate('vehicle')
             .populate('users')
-            .populate('name') // si name es un objectId a RutaN, etc.
-            .sort({ _id: -1 }) // Orden descendente por fecha de creación
+            .populate('name')
+            .sort({ _id: -1 })
             .exec();
-        if (!ruta) {
-            return res.json({ ok: false, message: 'No hay ruta para esa fecha' });
-        }
-        res.json({ ok: true, ruta });
+        res.json({
+            ok: true,
+            data: { rutas }
+        });
     }
     catch (err) {
         console.error('Error /rutas/fecha/:fecha', err);
-        res.status(500).json({ ok: false, err });
-    }
-}));
-/**
- * POST /rutas
- * Crea una nueva ruta (date, etc.).
- * Body esperado: { date, name, type, vehicle, users }
- */
-rutaRoutes.post('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { date, name, type, vehicle, users } = req.body;
-        // Creamos la nueva ruta
-        const nuevaRuta = yield rutas_model_1.Ruta.create({
-            date,
-            name,
-            type,
-            vehicle,
-            users
+        res.status(500).json({
+            ok: false,
+            error: 'Error al obtener rutas por fecha',
+            message: err.message || 'Error desconocido'
         });
-        res.json({ ok: true, ruta: nuevaRuta });
-    }
-    catch (err) {
-        console.error('Error POST /rutas', err);
-        res.status(500).json({ ok: false, err });
     }
 }));
+// Este endpoint está duplicado con /create, se elimina para evitar confusión
 /**
  * GET /rutas/:rutaId/partes
  * Devuelve los partes asociados a la ruta con _id = :rutaId
  */
-rutaRoutes.get('/:rutaId/partes', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaRoutes.get('/:rutaId/partes', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const rutaId = req.params.rutaId;
     try {
         const partes = yield parte_model_1.Parte.find({ ruta: rutaId })
+            .populate('customer')
             .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
             .exec();
-        res.json({ ok: true, partes });
+        res.json({
+            ok: true,
+            data: { partes }
+        });
     }
     catch (err) {
         console.error(`Error GET /rutas/${rutaId}/partes`, err);
-        res.status(500).json({ ok: false, err });
+        res.status(500).json({
+            ok: false,
+            error: 'Error al obtener partes de la ruta',
+            message: err.message || 'Error desconocido'
+        });
     }
 }));
 /**
@@ -266,20 +320,43 @@ rutaRoutes.get('/:rutaId/partes', (req, res) => __awaiter(void 0, void 0, void 0
  * Body: { parteIds: string[] }
  * Asigna esos partes a la ruta, marcando asignado = true y ruta = :id
  */
-rutaRoutes.post('/:id/asignarPartes', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaRoutes.post('/:id/asignarPartes', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const rutaId = req.params.id;
         const { parteIds } = req.body; // array de IDs
         if (!parteIds || !Array.isArray(parteIds)) {
-            return res.status(400).json({ ok: false, message: 'parteIds debe ser array' });
+            return res.status(400).json({
+                ok: false,
+                error: 'parteIds debe ser un array',
+                message: 'parteIds debe ser un array de IDs'
+            });
         }
-        // Actualizar
-        yield parte_model_1.Parte.updateMany({ _id: { $in: parteIds } }, { $set: { asignado: true, ruta: rutaId } });
-        res.json({ ok: true, message: 'Partes asignados a la ruta' });
+        // Verificar que la ruta existe
+        const ruta = yield rutas_model_1.Ruta.findById(rutaId);
+        if (!ruta) {
+            return res.status(404).json({
+                ok: false,
+                error: 'Ruta no encontrada',
+                message: 'La ruta especificada no existe'
+            });
+        }
+        // Actualizar partes
+        const result = yield parte_model_1.Parte.updateMany({ _id: { $in: parteIds } }, { $set: { asignado: true, ruta: rutaId } });
+        res.json({
+            ok: true,
+            data: {
+                message: 'Partes asignados a la ruta',
+                partesActualizados: result.modifiedCount
+            }
+        });
     }
     catch (err) {
         console.error('Error /rutas/:id/asignarPartes', err);
-        res.status(500).json({ ok: false, err });
+        res.status(500).json({
+            ok: false,
+            error: 'Error al asignar partes a la ruta',
+            message: err.message || 'Error desconocido'
+        });
     }
 }));
 /**
@@ -287,12 +364,15 @@ rutaRoutes.post('/:id/asignarPartes', (req, res) => __awaiter(void 0, void 0, vo
  * Devuelve todas las rutas cuya fecha (date) esté entre el inicio y fin del día indicado.
  * Formato de fecha: "YYYY-MM-DD"
  */
-rutaRoutes.get('/porFecha/:fecha', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+rutaRoutes.get('/porFecha/:fecha', autenticacion_1.verificarToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { fecha } = req.params; // Ejemplo: "2025-02-23"
     try {
-        // Convertir el parámetro en un rango UTC para abarcar todo el día
-        const start = new Date(fecha + 'T00:00:00.000Z');
-        const end = new Date(fecha + 'T23:59:59.999Z');
+        // Parsear fecha como fecha local para evitar problemas de timezone
+        const [year, month, day] = fecha.split('-').map(Number);
+        const start = new Date(year, month - 1, day);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(year, month - 1, day);
+        end.setHours(23, 59, 59, 999);
         // Buscar todas las rutas cuya fecha esté entre start y end
         const rutas = yield rutas_model_1.Ruta.find({
             date: { $gte: start, $lte: end },
@@ -303,11 +383,18 @@ rutaRoutes.get('/porFecha/:fecha', (req, res) => __awaiter(void 0, void 0, void 
             .populate('name')
             .sort({ _id: -1 }) // Orden descendente por fecha de creación
             .exec();
-        res.json({ ok: true, rutas });
+        res.json({
+            ok: true,
+            data: { rutas }
+        });
     }
     catch (err) {
         console.error('Error GET /rutas/porFecha/:fecha =>', err);
-        res.status(500).json({ ok: false, err });
+        res.status(500).json({
+            ok: false,
+            error: 'Error al obtener rutas por fecha',
+            message: err.message || 'Error desconocido'
+        });
     }
 }));
 /**
@@ -327,16 +414,18 @@ rutaRoutes.delete('/:id', autenticacion_1.verificarToken, (req, res) => __awaite
         }
         res.json({
             ok: true,
-            message: 'Ruta eliminada correctamente',
-            ruta: rutaUpdated
+            data: {
+                message: 'Ruta eliminada correctamente',
+                ruta: rutaUpdated
+            }
         });
     }
     catch (err) {
         console.error('Error al eliminar ruta =>', err);
         res.status(500).json({
             ok: false,
-            message: 'Error al eliminar ruta',
-            err
+            error: 'Error al eliminar ruta',
+            message: err.message || 'Error desconocido'
         });
     }
 }));
