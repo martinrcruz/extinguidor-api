@@ -28,7 +28,7 @@ const server = new Server();
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Deshabilitar cache y etags únicamente en producción (evitar respuestas 304 incorrectas)
-if (isProduction) {
+// if (isProduction) {
   server.app.disable('etag');
   server.app.use((req, _res, next) => {
     if (req.headers['if-none-match']) {
@@ -46,7 +46,7 @@ if (isProduction) {
     res.setHeader('Surrogate-Control', 'no-store');
     next();
   });
-}
+// }
 
 // Logging básico
 server.app.use(morgan('dev'));
@@ -80,7 +80,6 @@ const corsOptions = {
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
   maxAge: 86400 // 24 horas
 };
-
 
 server.app.use(cors(corsOptions));
 

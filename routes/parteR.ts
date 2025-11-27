@@ -8,6 +8,7 @@ import { startOfMonth, endOfMonth } from 'date-fns';
 import { validarDatos } from '../middlewares/validacion';
 import { verificarPropietarioParte } from '../middlewares/verificar-propietario';
 import { Customer } from '../models/customers.model';
+import { Ruta } from '../models/rutas.model';
 
 const parteRoutes = Router();
 const fileSystem = new FileSystem();
@@ -965,26 +966,22 @@ parteRoutes.get('/calendario/:date/rutas', verificarToken, async (req: Request, 
       });
     }
 
-    // Llamar a otro servicio para obtener las rutas por fecha
-    // Esto aprovecha el endpoint existente en rutaR.ts
-    const response = await fetch(`${req.protocol}://${req.get('host')}/rutas/porFecha/${dateStr}`, {
-      headers: {
-        'x-token': req.header('x-token') || '',
-        'Content-Type': 'application/json'
-      }
-    });
-    const data = await response.json();
+    // Calcular rango de día en hora local
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
 
-    if (!data.ok) {
-      throw new Error(data.error || 'Error al obtener rutas');
-    }
-
-    // Normalizar estructura de respuesta del endpoint /rutas/porFecha
-    const rutas = Array.isArray(data.rutas)
-      ? data.rutas
-      : Array.isArray(data.data?.rutas)
-        ? data.data.rutas
-        : [];
+    // Consultar rutas directamente sin proxys ni caches intermedias
+    const rutas = await Ruta.find({
+      date: { $gte: start, $lte: end },
+      eliminado: false
+    })
+      .populate('vehicle')
+      .populate('users')
+      .populate('name')
+      .sort({ _id: -1 })
+      .exec();
 
     res.json({
       ok: true,
