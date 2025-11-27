@@ -81,6 +81,7 @@ const corsOptions = {
   maxAge: 86400 // 24 horas
 };
 
+
 server.app.use(cors(corsOptions));
 
 // Conexión a MongoDB con manejo de errores mejorado
