@@ -28,21 +28,9 @@ import zipcodeRouter from "./routes/zipcodeR";
 config();
 
 const server = new Server();
-const isProduction = process.env.NODE_ENV === 'production';
 
-// Deshabilitamos etags y forzamos encabezados anti-cache solo en producción
-if (isProduction) {
-  server.app.disable('etag');
-  server.app.use((req, res, next) => {
-    res.set({
-      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0',
-      'Surrogate-Control': 'no-store'
-    });
-    next();
-  });
-}
+// Deshabilitar ETag para evitar respuestas 304 en endpoints dinámicos
+server.app.disable('etag');
 
 // Middleware de seguridad
 // Configurar helmet para permitir CORS
@@ -55,6 +43,15 @@ server.app.use(
 
 // Compresión de respuestas
 server.app.use(compression());
+
+// Forzar que todas las respuestas sean no cacheables (datos cambian constantemente)
+server.app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
 
 // Logging
 server.app.use(morgan('dev'));
@@ -87,6 +84,7 @@ server.app.use(fileUpload({
 
 // CORS config
 // Permitimos cualquier origen en desarrollo y solo orígenes específicos en producción
+const isProduction = process.env.NODE_ENV === 'production';
 const corsOptions = {
   origin: isProduction 
     ? ['https://extinguidor-frontend.vercel.app', 'https://extinguidor-frontend.netlify.app', 'https://extinguidor.app', 'https://www.extinguidor.app', 'https://app.extinguidor.com', 'https://elextinguidorapp.es', 'https://www.elextinguidorapp.es']
