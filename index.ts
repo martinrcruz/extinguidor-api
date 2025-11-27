@@ -32,6 +32,17 @@ const server = new Server();
 // Deshabilitar ETag para evitar respuestas 304 en endpoints dinámicos
 server.app.disable('etag');
 
+// Ignorar encabezados condicionales que podrían forzar respuestas 304 en producción
+server.app.use((req, _res, next) => {
+  if (req.headers['if-none-match']) {
+    delete req.headers['if-none-match'];
+  }
+  if (req.headers['if-modified-since']) {
+    delete req.headers['if-modified-since'];
+  }
+  next();
+});
+
 // Middleware de seguridad
 // Configurar helmet para permitir CORS
 server.app.use(

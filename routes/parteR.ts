@@ -14,60 +14,60 @@ const fileSystem = new FileSystem();
 
 // Middleware de validación para creación de partes
 const validarCreacionParte = validarDatos({
-    title: { type: 'string', required: true, maxLength: 200 },
-    description: { type: 'string', required: true },
-    date: { type: 'date', required: true },
-    customer: { type: 'string', required: true },
-    address: { type: 'string', required: true },
-    state: { type: 'string', enum: ['Pendiente', 'EnProceso', 'Finalizado'] },
-    type: { type: 'string', enum: ['Obra', 'Mantenimiento', 'Correctivo', 'Visitas'] },
-    categoria: { type: 'string', enum: ['Extintores', 'Incendio', 'Robo', 'CCTV', 'Pasiva', 'Venta'] },
-    facturacion: { type: 'number' },
-    ruta: { type: 'string' },
-    coordinationMethod: { type: 'string', enum: ['Llamar antes', 'Coordinar por email', 'Coordinar según horarios'] },
-    gestiona: { type: 'number' },
-    periodico: { type: 'boolean' },
-    frequency: { type: 'string', enum: ['Mensual', 'Trimestral', 'Semestral', 'Anual'] },
-    endDate: { type: 'date' },
-    articulos: { type: 'array' }
+  title: { type: 'string', required: true, maxLength: 200 },
+  description: { type: 'string', required: true },
+  date: { type: 'date', required: true },
+  customer: { type: 'string', required: true },
+  address: { type: 'string', required: true },
+  state: { type: 'string', enum: ['Pendiente', 'EnProceso', 'Finalizado'] },
+  type: { type: 'string', enum: ['Obra', 'Mantenimiento', 'Correctivo', 'Visitas'] },
+  categoria: { type: 'string', enum: ['Extintores', 'Incendio', 'Robo', 'CCTV', 'Pasiva', 'Venta'] },
+  facturacion: { type: 'number' },
+  ruta: { type: 'string' },
+  coordinationMethod: { type: 'string', enum: ['Llamar antes', 'Coordinar por email', 'Coordinar según horarios'] },
+  gestiona: { type: 'number' },
+  periodico: { type: 'boolean' },
+  frequency: { type: 'string', enum: ['Mensual', 'Trimestral', 'Semestral', 'Anual'] },
+  endDate: { type: 'date' },
+  articulos: { type: 'array' }
 });
 
 /**
  * GET /partes => lista todas, populando "customer" y "ruta"
  */
 parteRoutes.get('/', verificarToken, async (req: Request, res: Response) => {
-    try {
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 10;
-        const skip = (page - 1) * limit;
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
 
-        const [partes, total] = await Promise.all([
-            Parte.find()
-                .populate('customer')
-                .populate('ruta')
-                .skip(skip)
-                .limit(limit)
-                .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
-                .exec(),
-            Parte.countDocuments()
-        ]);
+    const [partes, total] = await Promise.all([
+      Parte.find()
+        .populate('customer')
+        .populate('ruta')
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
+        .exec(),
+      Parte.countDocuments()
+    ]);
 
-        res.json({ 
-            ok: true, 
-            data: {
-                partes,
-                total,
-                page,
-                limit
-            }
-        });
-    } catch (error: any) {
-        res.status(500).json({ 
-            ok: false,
-            error: 'Error al obtener partes',
-            message: error.message
-        });
-    }
+    res.json({
+      ok: true,
+      data: {
+        partes,
+        total,
+        page,
+        limit
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      ok: false,
+      error: 'Error al obtener partes',
+      message: error.message
+    });
+  }
 });
 
 /**
@@ -90,7 +90,7 @@ parteRoutes.post('/create', [verificarToken, validarCreacionParte], async (req: 
     // Verificar si el cliente existe y está activo
     const customer = await Customer.findById(data.customer);
     console.log('Cliente encontrado:', customer ? 'SÍ' : 'NO');
-    
+
     if (!customer) {
       console.log('ERROR: Cliente no encontrado');
       return res.status(404).json({
@@ -99,7 +99,7 @@ parteRoutes.post('/create', [verificarToken, validarCreacionParte], async (req: 
         message: 'Cliente no encontrado'
       });
     }
-    
+
     console.log('Cliente activo:', customer.active);
     // Verificar si el cliente está activo (por defecto true si no existe)
     if (customer.active === false) {
@@ -128,17 +128,17 @@ parteRoutes.post('/create', [verificarToken, validarCreacionParte], async (req: 
         message: 'La fecha debe ser un string en formato YYYY-MM-DD o un objeto Date'
       });
     }
-    
+
     const now = new Date();
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     firstOfMonth.setHours(0, 0, 0, 0);
     console.log('Fecha parseada:', fecha);
     console.log('Primer día del mes:', firstOfMonth);
-    
+
     // Comparar solo año y mes (ignorar día)
     const fechaYearMonth = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
     fechaYearMonth.setHours(0, 0, 0, 0);
-    
+
     if (fechaYearMonth < firstOfMonth) {
       console.log('ERROR: Fecha anterior al mes actual');
       return res.status(400).json({
@@ -200,25 +200,25 @@ parteRoutes.post('/create', [verificarToken, validarCreacionParte], async (req: 
         partesGuardadas.push(otroParteDB);
       }
 
-      return res.status(201).json({ 
-        ok: true, 
+      return res.status(201).json({
+        ok: true,
         data: { partes: partesGuardadas }
       });
     } else {
       // Caso no periódico
       console.log('Paso 6: Creando parte NO periódico');
       console.log('Datos para crear:', JSON.stringify(data, null, 2));
-      
+
       const parteDB = await Parte.create(data);
       console.log('Parte creado exitosamente:', parteDB._id);
-      
+
       if (documentsParte) {
         for (const doc of documentsParte) {
           await DocumentParte.create({ ...doc, parte: parteDB._id });
         }
       }
-      return res.status(201).json({ 
-        ok: true, 
+      return res.status(201).json({
+        ok: true,
         data: { parte: parteDB }
       });
     }
@@ -229,7 +229,7 @@ parteRoutes.post('/create', [verificarToken, validarCreacionParte], async (req: 
     console.error('Error message:', err.message);
     console.error('Error stack:', err.stack);
     console.error('===========================');
-    res.status(500).json({ 
+    res.status(500).json({
       ok: false,
       error: 'Error al crear parte',
       message: err.message
@@ -255,39 +255,39 @@ parteRoutes.post('/update', actualizarParte);
 
 /** POST /partes/update/:id              – params.id  */
 parteRoutes.post('/update/:id', (req, res, next) => {
-    req.body._id = req.params.id;   // redirigimos al mismo handler
-    actualizarParte(req, res);
+  req.body._id = req.params.id;   // redirigimos al mismo handler
+  actualizarParte(req, res);
 });
 
 async function actualizarParte(req: any, res: Response) {
-    try {
-        const idparte = req.body._id;
+  try {
+    const idparte = req.body._id;
 
-        /* ─── SANEAR camp­os ObjectId opcionales ─── */
-        const objectIdFields = ['ruta', 'customer', 'worker'];   // añade más si los tuvieras
-        const $unset: any = {};
-        objectIdFields.forEach(f => {
-            if (req.body[f] === '' || req.body[f] === null) {
-                delete req.body[f];        // evita Cast error
-                $unset[f] = '';            // borra la referencia en el doc
-            }
-        });
+    /* ─── SANEAR camp­os ObjectId opcionales ─── */
+    const objectIdFields = ['ruta', 'customer', 'worker'];   // añade más si los tuvieras
+    const $unset: any = {};
+    objectIdFields.forEach(f => {
+      if (req.body[f] === '' || req.body[f] === null) {
+        delete req.body[f];        // evita Cast error
+        $unset[f] = '';            // borra la referencia en el doc
+      }
+    });
 
-        /* Validaciones específicas que ya tenías … */
+    /* Validaciones específicas que ya tenías … */
 
-        const update = Object.keys($unset).length ? { $set: req.body, $unset } : req.body;
+    const update = Object.keys($unset).length ? { $set: req.body, $unset } : req.body;
 
-        const parteDB = await Parte.findByIdAndUpdate(idparte, update, { new: true });
-        if (!parteDB) return res.status(404).json({ ok: false, error: 'Parte no encontrada' });
+    const parteDB = await Parte.findByIdAndUpdate(idparte, update, { new: true });
+    if (!parteDB) return res.status(404).json({ ok: false, error: 'Parte no encontrada' });
 
-        res.json({ ok: true, data: parteDB });
-    } catch (err: any) {
-        res.status(500).json({
-            ok: false,
-            error: 'Error al actualizar la parte',
-            message: err.message
-        });
-    }
+    res.json({ ok: true, data: parteDB });
+  } catch (err: any) {
+    res.status(500).json({
+      ok: false,
+      error: 'Error al actualizar la parte',
+      message: err.message
+    });
+  }
 }
 
 /**
@@ -307,19 +307,19 @@ parteRoutes.get('/noAsignadosEnMes', async (req: Request, res: Response) => {
       asignado: false,
       date: { $lte: end }  // Traer todos los partes no asignados hasta el fin del mes especificado
     })
-    .populate('customer')
-    .populate('ruta')
-    .sort({ createdDate: -1 })  // Ordenar por fecha de creación descendente
-    .exec();
+      .populate('customer')
+      .populate('ruta')
+      .sort({ createdDate: -1 })  // Ordenar por fecha de creación descendente
+      .exec();
 
-    res.json({ 
-      ok: true, 
+    res.json({
+      ok: true,
       data: { partes }
     });
   } catch (err: any) {
     console.error('Error GET /partes/noAsignadosEnMes', err);
-    res.status(500).json({ 
-      ok: false, 
+    res.status(500).json({
+      ok: false,
       error: 'Error al obtener partes no asignados',
       message: err.message || 'Error desconocido'
     });
@@ -333,19 +333,19 @@ parteRoutes.get('/contrato/:contrato', verificarToken, async (req: Request, res:
   const contrato = req.params.contrato;
   try {
     const partes: IParte[] = await Parte.find({ customer: contrato })
-        .populate('ruta')
-        .populate({
-          path: 'customer',
-          populate: { path: 'zone' }
-        })
-        .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
-    res.json({ 
-      ok: true, 
+      .populate('ruta')
+      .populate({
+        path: 'customer',
+        populate: { path: 'zone' }
+      })
+      .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
+    res.json({
+      ok: true,
       data: { partes }
     });
   } catch (error: any) {
     console.error('Error GET /partes/contrato/:contrato', error);
-    res.status(500).json({ 
+    res.status(500).json({
       ok: false,
       error: 'Error al obtener los partes',
       message: error.message || 'Error desconocido'
@@ -360,18 +360,18 @@ parteRoutes.get('/ruta/:ruta', verificarToken, async (req: Request, res: Respons
   const ruta = req.params.ruta;
   try {
     const partes: IParte[] = await Parte.find({ ruta })
-        .populate({
-          path: 'customer',
-          populate: { path: 'zone' }
-        })
-        .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
-    res.json({ 
-      ok: true, 
+      .populate({
+        path: 'customer',
+        populate: { path: 'zone' }
+      })
+      .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
+    res.json({
+      ok: true,
       data: { partes }
     });
   } catch (error: any) {
     console.error('Error GET /partes/ruta/:ruta', error);
-    res.status(500).json({ 
+    res.status(500).json({
       ok: false,
       error: 'Error al obtener los partes',
       message: error.message || 'Error desconocido'
@@ -402,17 +402,17 @@ parteRoutes.get('/noasignados', async (req: Request, res: Response) => {
       }
     }).populate({
       path: 'customer',
-      populate: { path: 'zone'  }
+      populate: { path: 'zone' }
     })
-    .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
+      .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
 
-    res.json({ 
-      ok: true, 
+    res.json({
+      ok: true,
       data: { partes }
     });
   } catch (error: any) {
     console.error('Error GET /partes/noasignados', error);
-    res.status(500).json({ 
+    res.status(500).json({
       ok: false,
       error: 'Error al obtener los partes',
       message: error.message || 'Error desconocido'
@@ -443,15 +443,15 @@ parteRoutes.get('/noasignado/:fecha', async (req: Request, res: Response) => {
       path: 'customer',
       populate: { path: 'zone' }
     })
-    .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
+      .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
 
-    res.json({ 
-      ok: true, 
+    res.json({
+      ok: true,
       data: { partes }
     });
   } catch (error: any) {
     console.error('Error GET /partes/noasignado/:fecha', error);
-    res.status(500).json({ 
+    res.status(500).json({
       ok: false,
       error: 'Error al obtener los partes',
       message: error.message || 'Error desconocido'
@@ -482,15 +482,15 @@ parteRoutes.get('/asignado', async (req: Request, res: Response) => {
       path: 'customer',
       populate: { path: 'zone' }
     }).populate('ruta')
-    .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
+      .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
 
-    res.json({ 
-      ok: true, 
+    res.json({
+      ok: true,
       data: { partes }
     });
   } catch (error: any) {
     console.error('Error GET /partes/asignado', error);
-    res.status(500).json({ 
+    res.status(500).json({
       ok: false,
       error: 'Error al obtener los partes',
       message: error.message || 'Error desconocido'
@@ -522,7 +522,7 @@ parteRoutes.get('/nofin', async (req: Request, res: Response) => {
       path: 'customer',
       populate: { path: 'zone' }
     }).populate('ruta')
-    .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
+      .sort({ createdDate: -1 }); // Orden descendente por fecha de creación
 
     res.json({ ok: true, partes });
   } catch (error) {
@@ -538,21 +538,21 @@ parteRoutes.get('/finalizadasEnMes', async (req: Request, res: Response) => {
     }
     const fecha = new Date(dateStr);
     const monthStart = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
-    const monthEnd   = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
+    const monthEnd = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
 
     const partes = await Parte.find({
       state: 'Finalizado',
       date: { $gte: monthStart, $lte: monthEnd }
     }).exec();
 
-    res.json({ 
-      ok: true, 
+    res.json({
+      ok: true,
       data: { partes }
     });
   } catch (err: any) {
     console.error('Error GET /partes/finalizadasEnMes', err);
-    res.status(500).json({ 
-      ok: false, 
+    res.status(500).json({
+      ok: false,
       error: 'Error al obtener partes finalizados',
       message: err.message || 'Error desconocido'
     });
@@ -566,24 +566,24 @@ parteRoutes.get('/finalizadasEnMes', async (req: Request, res: Response) => {
 parteRoutes.get('/:id', async (req: Request, res: Response) => {
   try {
     const parte = await Parte.findById(req.params.id)
-        .populate({
-          path: 'customer',
-          populate: { path: 'zone' }
-        }).exec();
+      .populate({
+        path: 'customer',
+        populate: { path: 'zone' }
+      }).exec();
     if (!parte) {
-      return res.status(404).json({ 
-        ok: false, 
+      return res.status(404).json({
+        ok: false,
         error: 'Parte no encontrada',
         message: 'Parte no encontrada'
       });
     }
-    res.json({ 
-      ok: true, 
+    res.json({
+      ok: true,
       data: { parte }
     });
   } catch (err: any) {
     console.error('Error GET /partes/:id', err);
-    res.status(500).json({ 
+    res.status(500).json({
       ok: false,
       error: 'Error al obtener parte',
       message: err.message || 'Error desconocido'
@@ -599,19 +599,19 @@ parteRoutes.delete('/:id', async (req: Request, res: Response) => {
   try {
     const parteDeleted = await Parte.findByIdAndDelete(req.params.id);
     if (!parteDeleted) {
-      return res.status(404).json({ 
-        ok: false, 
+      return res.status(404).json({
+        ok: false,
         error: 'Parte no encontrado',
         message: 'No encontrado'
       });
     }
-    res.json({ 
-      ok: true, 
+    res.json({
+      ok: true,
       data: { parte: parteDeleted }
     });
   } catch (err: any) {
     console.error('Error DELETE /partes/:id', err);
-    res.status(500).json({ 
+    res.status(500).json({
       ok: false,
       error: 'Error al eliminar parte',
       message: err.message || 'Error desconocido'
@@ -623,123 +623,123 @@ parteRoutes.delete('/:id', async (req: Request, res: Response) => {
  * POST /partes/upload => Sube un documento a un parte
  */
 parteRoutes.post('/upload', [verificarToken, verificarPropietarioParte], async (req: any, res: Response) => {
-    try {
-        if (!req.files || Object.keys(req.files).length === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'No se ha subido ningún archivo'
-            });
-        }
-
-        const file = req.files.file as FileUpload;
-        if (!file || !file.mimetype || !file.size) {
-            return res.status(400).json({
-                ok: false,
-                message: 'Archivo inválido'
-            });
-        }
-
-        const parteId = req.body.parteId;
-        if (!parteId) {
-            return res.status(400).json({
-                ok: false,
-                message: 'ID de parte no proporcionado'
-            });
-        }
-
-        // Validar tipo de archivo
-        const tiposPermitidos = ['image/jpeg', 'image/png', 'application/pdf'];
-        if (!tiposPermitidos.includes(file.mimetype)) {
-            return res.status(400).json({
-                ok: false,
-                message: 'Tipo de archivo no permitido. Solo se permiten imágenes y PDFs'
-            });
-        }
-
-        // Validar tamaño (máximo 5MB)
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        if (Number(file.size) > maxSize) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El archivo excede el tamaño máximo permitido (5MB)'
-            });
-        }
-
-        // Verificar si el parte existe
-        const parte = await Parte.findById(parteId);
-        if (!parte) {
-            return res.status(404).json({
-                ok: false,
-                message: 'Parte no encontrado'
-            });
-        }
-
-        // Guardar archivo
-        const fileName = await fileSystem.guardarFileTemp(file, 'partes', req.usuario._id);
-        if (!fileName) {
-            return res.status(500).json({
-                ok: false,
-                message: 'Error al guardar el archivo'
-            });
-        }
-
-        // Crear documento en la base de datos
-        const documento = await DocumentParte.create({
-            nombre: file.name,
-            url: fileName,
-            tipo: file.mimetype,
-            parte: parteId
-        });
-
-        res.json({
-            ok: true,
-            documento
-        });
-
-    } catch (err) {
-        console.error('Error al subir archivo =>', err);
-        res.status(500).json({
-            ok: false,
-            message: 'Error al subir archivo',
-            err
-        });
+  try {
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({
+        ok: false,
+        message: 'No se ha subido ningún archivo'
+      });
     }
+
+    const file = req.files.file as FileUpload;
+    if (!file || !file.mimetype || !file.size) {
+      return res.status(400).json({
+        ok: false,
+        message: 'Archivo inválido'
+      });
+    }
+
+    const parteId = req.body.parteId;
+    if (!parteId) {
+      return res.status(400).json({
+        ok: false,
+        message: 'ID de parte no proporcionado'
+      });
+    }
+
+    // Validar tipo de archivo
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (!tiposPermitidos.includes(file.mimetype)) {
+      return res.status(400).json({
+        ok: false,
+        message: 'Tipo de archivo no permitido. Solo se permiten imágenes y PDFs'
+      });
+    }
+
+    // Validar tamaño (máximo 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (Number(file.size) > maxSize) {
+      return res.status(400).json({
+        ok: false,
+        message: 'El archivo excede el tamaño máximo permitido (5MB)'
+      });
+    }
+
+    // Verificar si el parte existe
+    const parte = await Parte.findById(parteId);
+    if (!parte) {
+      return res.status(404).json({
+        ok: false,
+        message: 'Parte no encontrado'
+      });
+    }
+
+    // Guardar archivo
+    const fileName = await fileSystem.guardarFileTemp(file, 'partes', req.usuario._id);
+    if (!fileName) {
+      return res.status(500).json({
+        ok: false,
+        message: 'Error al guardar el archivo'
+      });
+    }
+
+    // Crear documento en la base de datos
+    const documento = await DocumentParte.create({
+      nombre: file.name,
+      url: fileName,
+      tipo: file.mimetype,
+      parte: parteId
+    });
+
+    res.json({
+      ok: true,
+      documento
+    });
+
+  } catch (err) {
+    console.error('Error al subir archivo =>', err);
+    res.status(500).json({
+      ok: false,
+      message: 'Error al subir archivo',
+      err
+    });
+  }
 });
 
 /**
  * DELETE /partes/documento/:id => Elimina un documento
  */
 parteRoutes.delete('/documento/:id', [verificarToken, verificarPropietarioParte], async (req: any, res: Response) => {
-    try {
-        const documentoId = req.params.id;
-        const documento = await DocumentParte.findById(documentoId);
-        
-        if (!documento) {
-            return res.status(404).json({
-                ok: false,
-                message: 'Documento no encontrado'
-            });
-        }
+  try {
+    const documentoId = req.params.id;
+    const documento = await DocumentParte.findById(documentoId);
 
-        // Eliminar archivo físico
-        await fileSystem.eliminarFileTemp(documento.url, 'partes');
-
-        // Eliminar documento de la base de datos
-        await DocumentParte.findByIdAndDelete(documentoId);
-
-        res.json({
-            ok: true,
-            message: 'Documento eliminado correctamente'
-        });
-
-    } catch (err) {
-        console.error('Error al eliminar documento =>', err);
-        res.status(500).json({
-            ok: false,
-            message: 'Error al eliminar documento',
-            err
-        });
+    if (!documento) {
+      return res.status(404).json({
+        ok: false,
+        message: 'Documento no encontrado'
+      });
     }
+
+    // Eliminar archivo físico
+    await fileSystem.eliminarFileTemp(documento.url, 'partes');
+
+    // Eliminar documento de la base de datos
+    await DocumentParte.findByIdAndDelete(documentoId);
+
+    res.json({
+      ok: true,
+      message: 'Documento eliminado correctamente'
+    });
+
+  } catch (err) {
+    console.error('Error al eliminar documento =>', err);
+    res.status(500).json({
+      ok: false,
+      message: 'Error al eliminar documento',
+      err
+    });
+  }
 });
 
 /**
@@ -752,7 +752,7 @@ parteRoutes.get('/worker/:workerId', verificarToken, async (req: Request, res: R
     const { date } = req.query;
 
     let query: any = { worker: workerId };
-    
+
     if (date) {
       const fecha = new Date(date as string);
       const start = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
@@ -763,7 +763,7 @@ parteRoutes.get('/worker/:workerId', verificarToken, async (req: Request, res: R
     // Establecer cabeceras de caché para optimizar las peticiones frecuentes
     // 60 segundos de caché para reducir peticiones repetidas
     res.setHeader('Cache-Control', 'private, max-age=60');
-    
+
     // Generar un ETag basado en la fecha de la solicitud para control de caché
     // Esto permite al cliente usar If-None-Match en solicitudes posteriores
     const requestTime = new Date().getTime();
@@ -775,15 +775,15 @@ parteRoutes.get('/worker/:workerId', verificarToken, async (req: Request, res: R
       .populate('ruta')
       .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
       .exec();
-    
-    res.json({ 
-      ok: true, 
+
+    res.json({
+      ok: true,
       data: { partes }
     });
   } catch (error: any) {
     console.error('Error GET /partes/worker/:workerId', error);
-    res.status(500).json({ 
-      ok: false, 
+    res.status(500).json({
+      ok: false,
       error: 'Error al obtener partes del trabajador',
       message: error.message || 'Error desconocido'
     });
@@ -803,8 +803,8 @@ parteRoutes.put('/:id/status', verificarToken, async (req: any, res: Response) =
     // Validar si el estado es válido
     const validStatus = ['Pendiente', 'EnProceso', 'Finalizado'];
     if (!validStatus.includes(status)) {
-      return res.status(400).json({ 
-        ok: false, 
+      return res.status(400).json({
+        ok: false,
         error: 'Estado inválido',
         message: 'El estado debe ser uno de los siguientes: Pendiente, EnProceso, Finalizado'
       });
@@ -813,8 +813,8 @@ parteRoutes.put('/:id/status', verificarToken, async (req: any, res: Response) =
     // Verificar que el parte pertenece al worker
     const parte = await Parte.findOne({ _id: id, worker: userId });
     if (!parte) {
-      return res.status(404).json({ 
-        ok: false, 
+      return res.status(404).json({
+        ok: false,
         error: 'Parte no encontrado o no tienes permisos para modificarlo'
       });
     }
@@ -822,34 +822,34 @@ parteRoutes.put('/:id/status', verificarToken, async (req: any, res: Response) =
     // Si el estado actual ya es el que se quiere asignar, no hacer nada
     // Esto actúa como debouncing en el servidor para peticiones duplicadas
     if (parte.state === status) {
-      return res.json({ 
-        ok: true, 
-        parte, 
+      return res.json({
+        ok: true,
+        parte,
         message: 'El estado ya está actualizado'
       });
     }
 
     // Actualizar el estado
     parte.state = status;
-    
+
     // Si el estado es Finalizado, guardar la fecha de finalización
     if (status === 'Finalizado') {
       parte.finalizadoTime = new Date();
     }
 
     await parte.save();
-    
+
     // Establecer encabezado de caché para prevenir solicitudes repetidas
     res.setHeader('Cache-Control', 'private, max-age=10');
 
-    res.json({ 
-      ok: true, 
+    res.json({
+      ok: true,
       data: { parte }
     });
   } catch (error: any) {
     console.error('Error al actualizar estado de parte:', error);
-    res.status(500).json({ 
-      ok: false, 
+    res.status(500).json({
+      ok: false,
       error: 'Error al actualizar el estado',
       message: error.message || 'Error desconocido'
     });
@@ -865,35 +865,35 @@ parteRoutes.get('/calendario/:date/partes-no-asignados', verificarToken, async (
   try {
     const dateStr = req.params.date;
     const date = new Date(dateStr);
-    
+
     if (isNaN(date.getTime())) {
-      return res.status(400).json({ 
-        ok: false, 
+      return res.status(400).json({
+        ok: false,
         error: 'Formato de fecha inválido',
         message: 'El formato de fecha debe ser YYYY-MM-DD'
       });
     }
-    
+
     // Obtener solo el fin del mes, ya que queremos todos los partes hasta esa fecha
     const end = endOfMonth(date);
-    
+
     // Buscar partes no asignados hasta el fin del mes especificado
     const partes = await Parte.find({
       date: { $lte: end },
       asignado: false
     })
-    .populate('customer')
-    .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
-    .exec();
-    
-    res.json({ 
-      ok: true, 
+      .populate('customer')
+      .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
+      .exec();
+
+    res.json({
+      ok: true,
       partes
     });
   } catch (error: any) {
     console.error('Error en GET /calendario/:date/partes-no-asignados =>', error);
-    res.status(500).json({ 
-      ok: false, 
+    res.status(500).json({
+      ok: false,
       error: 'Error al obtener partes no asignados',
       message: error.message
     });
@@ -909,37 +909,37 @@ parteRoutes.get('/calendario/:date/partes-finalizados', verificarToken, async (r
   try {
     const dateStr = req.params.date;
     const date = new Date(dateStr);
-    
+
     if (isNaN(date.getTime())) {
-      return res.status(400).json({ 
-        ok: false, 
+      return res.status(400).json({
+        ok: false,
         error: 'Formato de fecha inválido',
         message: 'El formato de fecha debe ser YYYY-MM-DD'
       });
     }
-    
+
     // Obtener inicio y fin del mes
     const start = startOfMonth(date);
     const end = endOfMonth(date);
-    
+
     // Buscar partes finalizados (estado=finalizado) en ese rango de fecha
     const partes = await Parte.find({
       date: { $gte: start, $lte: end },
       state: 'Finalizado'
     })
-    .select('date facturacion customer')
-    .populate('customer', 'name')
-    .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
-    .exec();
-    
-    res.json({ 
-      ok: true, 
+      .select('date facturacion customer')
+      .populate('customer', 'name')
+      .sort({ createdDate: -1 }) // Orden descendente por fecha de creación
+      .exec();
+
+    res.json({
+      ok: true,
       data: { partes }
     });
   } catch (error: any) {
     console.error('Error en GET /calendario/:date/partes-finalizados =>', error);
-    res.status(500).json({ 
-      ok: false, 
+    res.status(500).json({
+      ok: false,
       error: 'Error al obtener partes finalizados',
       message: error.message || 'Error desconocido'
     });
@@ -954,17 +954,17 @@ parteRoutes.get('/calendario/:date/partes-finalizados', verificarToken, async (r
 parteRoutes.get('/calendario/:date/rutas', verificarToken, async (req: Request, res: Response) => {
   try {
     const dateStr = req.params.date;
-    
+
     // Validar formato de fecha
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) {
-      return res.status(400).json({ 
-        ok: false, 
+      return res.status(400).json({
+        ok: false,
         error: 'Formato de fecha inválido',
         message: 'El formato de fecha debe ser YYYY-MM-DD'
       });
     }
-    
+
     // Llamar a otro servicio para obtener las rutas por fecha
     // Esto aprovecha el endpoint existente en rutaR.ts
     const response = await fetch(`${req.protocol}://${req.get('host')}/rutas/porFecha/${dateStr}`, {
@@ -973,22 +973,33 @@ parteRoutes.get('/calendario/:date/rutas', verificarToken, async (req: Request, 
         'Content-Type': 'application/json'
       }
     });
-    
     const data = await response.json();
-    
-    // Devolver el mismo formato de respuesta
-    if (data.ok) {
-      res.json({ 
-        ok: true, 
-        rutas: data.rutas 
-      });
-    } else {
+
+    if (!data.ok) {
       throw new Error(data.error || 'Error al obtener rutas');
+    }
+
+    // Normalizar estructura de respuesta del endpoint /rutas/porFecha
+    const rutas = Array.isArray(data.rutas)
+      ? data.rutas
+      : Array.isArray(data.data?.rutas)
+        ? data.data.rutas
+        : [];
+
+    res.json({
+      ok: true,
+      data: { rutas }
+    });
+
+    if (!rutas.length) {
+      console.warn(`[Calendario] No se encontraron rutas para ${dateStr}`);
+    } else {
+      console.log(`[Calendario] Rutas devueltas para ${dateStr}: ${rutas.length}`);
     }
   } catch (error: any) {
     console.error('Error en GET /calendario/:date/rutas =>', error);
-    res.status(500).json({ 
-      ok: false, 
+    res.status(500).json({
+      ok: false,
       error: 'Error al obtener rutas por fecha',
       message: error.message
     });
