@@ -18,10 +18,6 @@ import herramientaRoutes from "./routes/herramientaR";
 import contractRoutes from "./routes/contractR";
 import { config } from 'dotenv';
 import morgan from 'morgan';
-import helmet from 'helmet';
-import compression from 'compression';
-import { generalLimiter, authLimiter, uploadLimiter, workerLimiter, handleRateLimitError } from './middlewares/rate-limiter';
-import { requestLogger, errorLogger } from './middlewares/logger';
 import articuloRouter from './routes/articuloR';
 import zipcodeRouter from "./routes/zipcodeR";
 // Cargar variables de entorno
@@ -29,52 +25,22 @@ config();
 
 const server = new Server();
 
-// Deshabilitar ETag para evitar respuestas 304 en endpoints dinámicos
-server.app.disable('etag');
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Ignorar encabezados condicionales que podrían forzar respuestas 304 en producción
-server.app.use((req, _res, next) => {
-  if (req.headers['if-none-match']) {
-    delete req.headers['if-none-match'];
-  }
-  if (req.headers['if-modified-since']) {
-    delete req.headers['if-modified-since'];
-  }
-  next();
-});
+// Deshabilitar cache y etags únicamente en producción (evitar respuestas 304 incorrectas)
+if (isProduction) {
+  server.app.disable('etag');
+  server.app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    next();
+  });
+}
 
-// Middleware de seguridad
-// Configurar helmet para permitir CORS
-server.app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "unsafe-none" }
-  })
-);
-
-// Compresión de respuestas
-server.app.use(compression());
-
-// Forzar que todas las respuestas sean no cacheables (datos cambian constantemente)
-server.app.use((req, res, next) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('Surrogate-Control', 'no-store');
-  next();
-});
-
-// Logging
+// Logging básico
 server.app.use(morgan('dev'));
-server.app.use(requestLogger);
-
-// Rate limiting
-server.app.use(generalLimiter);
-server.app.use('/user/login', authLimiter);
-server.app.use('/user/register', authLimiter);
-server.app.use('/partes/upload', uploadLimiter);
-// Aplicamos limiter específico para rutas de worker
-server.app.use('/partes/worker', workerLimiter);
 
 // Body parser con límites
 server.app.use(bodyParser.urlencoded({
@@ -95,7 +61,6 @@ server.app.use(fileUpload({
 
 // CORS config
 // Permitimos cualquier origen en desarrollo y solo orígenes específicos en producción
-const isProduction = process.env.NODE_ENV === 'production';
 const corsOptions = {
   origin: isProduction 
     ? ['https://extinguidor-frontend.vercel.app', 'https://extinguidor-frontend.netlify.app', 'https://extinguidor.app', 'https://www.extinguidor.app', 'https://app.extinguidor.com', 'https://elextinguidorapp.es', 'https://www.elextinguidorapp.es']
@@ -124,9 +89,6 @@ const connectDB = async () => {
     }
 };
 
-// Middleware de manejo de errores global
-server.app.use(errorLogger);
-server.app.use(handleRateLimitError);
 server.app.use((err: any, req: any, res: any, next: any) => {
     console.error(err.stack);
     res.status(err.status || 500).json({
