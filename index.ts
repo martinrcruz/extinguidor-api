@@ -30,6 +30,15 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Deshabilitar cache y etags únicamente en producción (evitar respuestas 304 incorrectas)
 if (isProduction) {
   server.app.disable('etag');
+  server.app.use((req, _res, next) => {
+    if (req.headers['if-none-match']) {
+      delete req.headers['if-none-match'];
+    }
+    if (req.headers['if-modified-since']) {
+      delete req.headers['if-modified-since'];
+    }
+    next();
+  });
   server.app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
